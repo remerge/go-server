@@ -9,7 +9,7 @@ import (
 	"runtime/debug"
 	"sync"
 
-	"github.com/remerge/rex/rollbar"
+	"github.com/bobziuchkovski/cue"
 )
 
 type Connection struct {
@@ -108,23 +108,9 @@ func (c *Connection) Serve() {
 			fmt.Printf("unhandled panic: %v\n", err)
 			debug.PrintStack()
 
-			switch err.(type) {
-			case error:
-				rollbar.Error(rollbar.CRIT, err.(error), &rollbar.Field{
-					Name: "person",
-					Data: map[string]string{
-						"id": c.Conn.RemoteAddr().String(),
-					},
-				})
-			default:
-				rollbar.Message(rollbar.CRIT,
-					"unhandled server connection error",
-					&rollbar.Field{Name: "error", Data: err},
-					&rollbar.Field{Name: "person", Data: map[string]string{
-						"id": c.Conn.RemoteAddr().String(),
-					}},
-				)
-			}
+			c.Server.Log.WithFields(cue.Fields{
+				"person_id": c.Conn.RemoteAddr().String(),
+			}).Panic(err, "unhandled server connection error")
 		}
 		c.Close()
 	}()
