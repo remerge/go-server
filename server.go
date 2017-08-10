@@ -4,10 +4,8 @@ import (
 	"crypto/tls"
 	"fmt"
 
-	"github.com/juju/loggo"
-	metrics "github.com/rcrowley/go-metrics"
-	"github.com/remerge/rex"
-	"github.com/remerge/rex/log"
+	"github.com/bobziuchkovski/cue"
+	"github.com/rcrowley/go-metrics"
 )
 
 type Server struct {
@@ -18,7 +16,7 @@ type Server struct {
 	MaxConns   int64
 	BufferSize int
 
-	Log     loggo.Logger
+	Log     cue.Logger
 	Handler Handler
 
 	listener    *Listener
@@ -38,7 +36,7 @@ func NewServer(port int) (server *Server, err error) {
 	server.Port = port
 	server.BufferSize = 32768
 
-	server.Log = log.GetLogger(server.Id)
+	server.Log = cue.NewLogger(server.Id)
 	server.Log.Infof("new server on port %d", port)
 
 	server.accepts = metrics.GetOrRegisterCounter(fmt.Sprintf("rex.server,port=%d accept", port), nil)
@@ -126,11 +124,11 @@ func (server *Server) Stop() {
 }
 
 func (server *Server) Serve() {
-	rex.MayPanic(server.listener.Run(server.serve))
+	server.Log.Panic(server.listener.Run(server.serve), "could not run the listener")
 }
 
 func (server *Server) ServeTLS() {
-	rex.MayPanic(server.tlsListener.Run(server.serve))
+	server.Log.Panic(server.tlsListener.Run(server.serve), "could not run the TLS listener")
 }
 
 func (server *Server) serve(listener *Listener) error {

@@ -6,21 +6,20 @@ import (
 	"net"
 	"sync"
 
-	"github.com/juju/loggo"
-	"github.com/remerge/rex/log"
+	"github.com/bobziuchkovski/cue"
 )
 
 type Listener struct {
 	net.Listener
 	wg      sync.WaitGroup
-	log     loggo.Logger
+	log     cue.Logger
 	stopped bool
 }
 
 func NewListener(port int) (listener *Listener, err error) {
 	listener = &Listener{}
 
-	listener.log = log.GetLogger(fmt.Sprintf("listener:%d", port))
+	listener.log = cue.NewLogger(fmt.Sprintf("listener:%d", port))
 	listener.log.Infof("start listen on port %d", port)
 
 	listener.Listener, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
