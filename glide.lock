@@ -1,8 +1,8 @@
-hash: 647abca1cc34f29c4bfc232ffe5bad99bc2599bc2743b3536300c44447083919
-updated: 2017-08-09T21:43:16.464384877+02:00
+hash: 92c96922b3ad4fa1046ddc41c437a30699290c788ba31cbff56ed8e6c924afca
+updated: 2017-08-30T17:13:37.322202928+02:00
 imports:
-- name: github.com/bobziuchkovski/cue
-  version: 852726be06b5c373580e50301c29f53f642f65ec
 - name: github.com/rcrowley/go-metrics
   version: 1f30fe9094a513ce4c700b9a54458bbb0c96996c
+- name: github.com/remerge/cue
+  version: 69c896c02169b211510320825b6ef71ab62e579f
 testImports: []

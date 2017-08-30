@@ -1,4 +1,4 @@
 package: github.com/remerge/go-server
 import:
-- package: github.com/bobziuchkovski/cue
 - package: github.com/rcrowley/go-metrics
+- package: github.com/remerge/cue

@@ -4,8 +4,8 @@ import (
 	"crypto/tls"
 	"fmt"
 
-	"github.com/bobziuchkovski/cue"
 	"github.com/rcrowley/go-metrics"
+	"github.com/remerge/cue"
 )
 
 type Server struct {

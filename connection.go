@@ -9,7 +9,7 @@ import (
 	"runtime/debug"
 	"sync"
 
-	"github.com/bobziuchkovski/cue"
+	"github.com/remerge/cue"
 )
 
 type Connection struct {

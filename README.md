@@ -13,12 +13,18 @@ go get github.com/remerge/go-server
 ```go
 package main
 
-import (
-	"fmt"
-	rand "github.com/remerge/go-xorshift"
-)
+import "github.com/remerge/go-server"
+
+type serverHandler struct {
+}
+
+func (h *serverHandler) Handle(c *server.Connection) {
+	// Handle stuff here
+}
 
 func main() {
-	fmt.Println(rand.Int63())
+	s, _ := server.NewServer(12345)
+    s.Handler = &serverHandler{}
+    s.Run()
 }
 ```
