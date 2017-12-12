@@ -110,7 +110,7 @@ func (c *Connection) Serve() {
 
 			c.Server.Log.WithFields(cue.Fields{
 				"person_id": c.Conn.RemoteAddr().String(),
-			}).Panic(err, "unhandled server connection error")
+			}).Error(fmt.Errorf("%v", err), "unhandled server connection error")
 		}
 		c.Close()
 	}()
