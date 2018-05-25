@@ -9,12 +9,13 @@ import (
 )
 
 type Server struct {
-	Id         string
-	Port       int
-	TlsPort    int
-	TlsConfig  *tls.Config
-	MaxConns   int64
-	BufferSize int
+	Id                         string
+	Port                       int
+	TlsPort                    int
+	TlsConfig                  *tls.Config
+	MaxConns                   int64
+	MaxConcurrentTLSHandshakes int64
+	BufferSize                 int
 
 	Log     cue.Logger
 	Handler Handler
@@ -22,11 +23,13 @@ type Server struct {
 	listener    *Listener
 	tlsListener *Listener
 
-	accepts      metrics.Counter
-	tooManyConns metrics.Counter
-	closes       metrics.Counter
-	numConns     metrics.Counter
-	tlsErrors    metrics.Counter
+	accepts                     metrics.Counter
+	tooManyConns                metrics.Counter
+	closes                      metrics.Counter
+	numConns                    metrics.Counter
+	numHandshakes               metrics.Counter
+	tooManyConcurrentHandshakes metrics.Counter
+	tlsErrors                   metrics.Counter
 }
 
 func NewServer(port int) (server *Server, err error) {
@@ -43,6 +46,8 @@ func NewServer(port int) (server *Server, err error) {
 	server.tooManyConns = metrics.GetOrRegisterCounter(fmt.Sprintf("rex.server,port=%d too_many_connection", port), nil)
 	server.closes = metrics.GetOrRegisterCounter(fmt.Sprintf("rex.server,port=%d close", port), nil)
 	server.numConns = metrics.GetOrRegisterCounter(fmt.Sprintf("rex.server,port=%d connection", port), nil)
+	server.numHandshakes = metrics.GetOrRegisterCounter(fmt.Sprintf("rex.server,port=%d handshakes", port), nil)
+	server.tooManyConcurrentHandshakes = metrics.GetOrRegisterCounter(fmt.Sprintf("rex.server,port=%d too_many_concurrent_handshakes", port), nil)
 	server.tlsErrors = metrics.GetOrRegisterCounter(fmt.Sprintf("rex.server,port=%d tls_error", port), nil)
 
 	return server, nil
@@ -153,8 +158,17 @@ func (server *Server) serve(listener *Listener) error {
 			// too many connections
 			server.tooManyConns.Inc(1)
 			conn.Close()
-		} else {
-			go server.NewConnection(conn).Serve()
+			continue
 		}
+
+		if server.MaxConcurrentTLSHandshakes > 0 && server.numHandshakes.Count() >= server.MaxConcurrentTLSHandshakes {
+			if tlsConn, ok := conn.(*tls.Conn); ok {
+				server.tooManyConcurrentHandshakes.Inc(1)
+				tlsConn.Close()
+				continue
+			}
+		}
+
+		go server.NewConnection(conn).Serve()
 	}
 }
