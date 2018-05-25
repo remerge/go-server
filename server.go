@@ -161,12 +161,16 @@ func (server *Server) serve(listener *Listener) error {
 			continue
 		}
 
-		if server.MaxConcurrentTLSHandshakes > 0 && server.numHandshakes.Count() >= server.MaxConcurrentTLSHandshakes {
-			if tlsConn, ok := conn.(*tls.Conn); ok {
+		if tlsConn, ok := conn.(*tls.Conn); ok {
+			if server.MaxConcurrentTLSHandshakes > 0 && server.numHandshakes.Count() >= server.MaxConcurrentTLSHandshakes {
 				server.tooManyConcurrentHandshakes.Inc(1)
 				tlsConn.Close()
 				continue
 			}
+			// We need to increase the outstanding handshakes here otherwise we
+			// accept way more than the limit due to the races with the new go routine.
+			// This is safe as well as long as .Server() is called which does a numHandshakes.Dec(1) .
+			server.numHandshakes.Inc(1)
 		}
 
 		go server.NewConnection(conn).Serve()
