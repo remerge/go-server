@@ -125,6 +125,11 @@ func (c *Connection) Serve() {
 	c.Server.Handler.Handle(c)
 }
 
+// Close - closes the underlying connection and puts it back in the pool
+// IMPORTANT: this should NEVER be called twice as it is not go routine safe:
+// The connection is put back in the pool and might be taken and reinitialized by
+// another go routine. If Close() is called a second time it will modify the connection
+// that is potentially already in use in a different go routine
 func (c *Connection) Close() {
 	// prevent double close
 	if c.Conn == nil {
