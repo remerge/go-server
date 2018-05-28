@@ -68,7 +68,7 @@ lint: build
 	cd $(GOSRCDIR) && \
 		gometalinter --vendor --vendored-linters --deadline=$(GOTEST_TIMEOUT) $(GOMETALINTER_OPTS) $(GOMETALINTER_EXCLUDES) $(GOPATHS)
 
-test: lint
+test:
 	cd $(GOSRCDIR) && \
 		go test -timeout $(GOTEST_TIMEOUT) -v $(GOPATHS)
 
