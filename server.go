@@ -42,13 +42,13 @@ func NewServer(port int) (server *Server, err error) {
 	server.Log = cue.NewLogger(server.Id)
 	server.Log.Infof("new server on port %d", port)
 
-	server.accepts = metrics.GetOrRegisterCounter(fmt.Sprintf("rex.server,port=%d accept", port), nil)
-	server.tooManyConns = metrics.GetOrRegisterCounter(fmt.Sprintf("rex.server,port=%d too_many_connection", port), nil)
-	server.closes = metrics.GetOrRegisterCounter(fmt.Sprintf("rex.server,port=%d close", port), nil)
-	server.numConns = metrics.GetOrRegisterCounter(fmt.Sprintf("rex.server,port=%d connection", port), nil)
-	server.numHandshakes = metrics.GetOrRegisterCounter(fmt.Sprintf("rex.server,port=%d handshakes", port), nil)
-	server.tooManyConcurrentHandshakes = metrics.GetOrRegisterCounter(fmt.Sprintf("rex.server,port=%d too_many_concurrent_handshakes", port), nil)
-	server.tlsErrors = metrics.GetOrRegisterCounter(fmt.Sprintf("rex.server,port=%d tls_error", port), nil)
+	server.accepts = metrics.GetOrRegisterCounter(fmt.Sprintf("rex_server,port=%d accept", port), nil)
+	server.tooManyConns = metrics.GetOrRegisterCounter(fmt.Sprintf("rex_server,port=%d too_many_connection", port), nil)
+	server.closes = metrics.GetOrRegisterCounter(fmt.Sprintf("rex_server,port=%d close", port), nil)
+	server.numConns = metrics.GetOrRegisterCounter(fmt.Sprintf("rex_server,port=%d connection", port), nil)
+	server.numHandshakes = metrics.GetOrRegisterCounter(fmt.Sprintf("rex_server,port=%d handshakes", port), nil)
+	server.tooManyConcurrentHandshakes = metrics.GetOrRegisterCounter(fmt.Sprintf("rex_server,port=%d too_many_concurrent_handshakes", port), nil)
+	server.tlsErrors = metrics.GetOrRegisterCounter(fmt.Sprintf("rex_server,port=%d tls_error", port), nil)
 
 	return server, nil
 }
