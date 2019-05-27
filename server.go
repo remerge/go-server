@@ -9,6 +9,8 @@ import (
 	"github.com/remerge/cue"
 )
 
+const connTimeout = 100 * time.Millisecond
+
 type Server struct {
 	Id                         string
 	Port                       int
@@ -148,7 +150,7 @@ func (server *Server) serve(listener *Listener) error {
 		if server.MaxConns > 0 && server.numConns.Count() > server.MaxConns {
 			// temporary pause accept loop
 			server.tooManyConns.Inc(1)
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(connTimeout)
 			continue
 		}
 
@@ -162,10 +164,16 @@ func (server *Server) serve(listener *Listener) error {
 
 		server.accepts.Inc(1)
 
+		// for cases of probe or blackhole connection
+		if err := conn.SetDeadline(time.Now().Add(connTimeout)); err != nil {
+			server.Log.Warnf("can not set deadline for TLS conn: %v", err)
+			continue
+		}
+
 		if tlsConn, ok := conn.(*tls.Conn); ok {
 			if server.MaxConcurrentTLSHandshakes > 0 && server.numHandshakes.Count() >= server.MaxConcurrentTLSHandshakes {
 				server.tooManyConcurrentHandshakes.Inc(1)
-				tlsConn.Close()
+				_ = tlsConn.Close()
 				continue
 			}
 			// We need to increase the outstanding handshakes here otherwise we
