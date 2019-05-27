@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/tls"
 	"fmt"
+	"time"
 
 	"github.com/rcrowley/go-metrics"
 	"github.com/remerge/cue"
@@ -144,6 +145,13 @@ func (server *Server) serve(listener *Listener) error {
 			return nil
 		}
 
+		if server.MaxConns > 0 && server.numConns.Count() > server.MaxConns {
+			// temporary pause accept loop
+			server.tooManyConns.Inc(1)
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+
 		conn, err := listener.Accept()
 		if err != nil {
 			if listener.IsStopped() {
@@ -153,13 +161,6 @@ func (server *Server) serve(listener *Listener) error {
 		}
 
 		server.accepts.Inc(1)
-
-		if server.MaxConns > 0 && server.numConns.Count() >= server.MaxConns {
-			// too many connections
-			server.tooManyConns.Inc(1)
-			conn.Close()
-			continue
-		}
 
 		if tlsConn, ok := conn.(*tls.Conn); ok {
 			if server.MaxConcurrentTLSHandshakes > 0 && server.numHandshakes.Count() >= server.MaxConcurrentTLSHandshakes {
