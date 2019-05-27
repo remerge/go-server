@@ -147,13 +147,6 @@ func (server *Server) serve(listener *Listener) error {
 			return nil
 		}
 
-		if server.MaxConns > 0 && server.numConns.Count() > server.MaxConns {
-			// temporary pause accept loop
-			server.tooManyConns.Inc(1)
-			time.Sleep(connTimeout)
-			continue
-		}
-
 		conn, err := listener.Accept()
 		if err != nil {
 			if listener.IsStopped() {
@@ -162,14 +155,20 @@ func (server *Server) serve(listener *Listener) error {
 			return err
 		}
 
-		server.accepts.Inc(1)
-
 		// for cases of probe or blackhole connection
 		if err := conn.SetDeadline(time.Now().Add(connTimeout)); err != nil {
-			server.Log.Warnf("can not set deadline for TLS conn: %v", err)
+			server.Log.Warnf("can not set deadline for conn: %v", err)
 			continue
 		}
 
+		if server.MaxConns > 0 && server.numConns.Count() > server.MaxConns {
+			// temporary pause accept loop
+			server.tooManyConns.Inc(1)
+			_ = conn.Close()
+			continue
+		}
+
+		server.accepts.Inc(1)
 		if tlsConn, ok := conn.(*tls.Conn); ok {
 			if server.MaxConcurrentTLSHandshakes > 0 && server.numHandshakes.Count() >= server.MaxConcurrentTLSHandshakes {
 				server.tooManyConcurrentHandshakes.Inc(1)
