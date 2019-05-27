@@ -149,20 +149,21 @@ func (c *Connection) Close() {
 		c.Server.closes.Inc(1)
 	}
 
-	// flush write buffer before close
-	if c.Buffer.Writer != nil {
-		_ = c.Buffer.Writer.Flush()
-	}
-
-	// close socket
 	if c.Conn != nil {
-		// set guard deadline in case of dead connection
+		// set guard deadline in case of bad connection
 		if err := c.Conn.SetDeadline(time.Now().Add(connTimeout)); err != nil {
 			c.Server.Log.Warnf("can not set conn deadline before close: %v", err)
 			return
 		}
+
+		// flush write buffer before close
+		if c.Buffer.Writer != nil {
+			_ = c.Buffer.Writer.Flush()
+		}
 		_ = c.Conn.Close()
 	}
+
+	// close socket
 
 	// put connection back into pool
 	putConnection(c)
