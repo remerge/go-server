@@ -11,8 +11,8 @@ import (
 type Server struct {
 	Id                         string
 	Port                       int
-	TlsPort                    int
-	TlsConfig                  *tls.Config
+	TlsPort                    int         // revive:disable:var-naming
+	TlsConfig                  *tls.Config // revive:disable:var-naming
 	MaxConns                   int64
 	MaxConcurrentTLSHandshakes int64
 	BufferSize                 int
@@ -129,14 +129,14 @@ func (server *Server) Stop() {
 }
 
 func (server *Server) Serve() {
-	server.Log.Panic(server.listener.Run(server.serve), "could not run the listener")
+	server.Log.Panic(server.listener.Run(server.acceptLoop), "could not run the listener")
 }
 
 func (server *Server) ServeTLS() {
-	server.Log.Panic(server.tlsListener.Run(server.serve), "could not run the TLS listener")
+	server.Log.Panic(server.tlsListener.Run(server.acceptLoop), "could not run the TLS listener")
 }
 
-func (server *Server) serve(listener *Listener) error {
+func (server *Server) acceptLoop(listener *Listener) error {
 	defer listener.Close()
 
 	for {
