@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/tls"
 	"fmt"
+	"time"
 
 	"github.com/rcrowley/go-metrics"
 	"github.com/remerge/cue"
@@ -125,6 +126,32 @@ func (server *Server) Stop() {
 		server.listener.Stop()
 		server.Log.Infof("waiting for requests to finish")
 		server.listener.Wait()
+	}
+
+	server.waitForRequests()
+}
+
+// StopDeadline is the hard deadline, after which Server.Stop() does no longer
+// wait for handlers to finish and returns.
+var StopDeadline = time.Minute
+
+// waitForRequests waits until all the handlers from listener and tlsListener
+// are done and close their connections.
+func (server *Server) waitForRequests() {
+	deadline := time.NewTimer(StopDeadline)
+	for {
+		if server.numConns.Count() == 0 {
+			server.Log.Infof("all requests finished")
+			break
+		}
+
+		select {
+		case <-deadline.C:
+			server.Log.Warnf("not all requests finished after %v", StopDeadline)
+			deadline.Stop()
+			break
+		case <-time.After(time.Millisecond):
+		}
 	}
 }
 
