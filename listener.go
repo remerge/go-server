@@ -46,7 +46,6 @@ func (listener *Listener) Accept() (conn net.Conn, err error) {
 }
 
 func (listener *Listener) Run(callback func(*Listener) error) error {
-	listener.wg.Add(1)
 	defer listener.wg.Done()
 	return callback(listener)
 }

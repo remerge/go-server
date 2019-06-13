@@ -69,3 +69,16 @@ func (h *testHandler) Handle(c *Connection) {
 	// use the resource that gets removed after Stop()
 	_ = *h.resource
 }
+
+func TestRunStopRace(t *testing.T) {
+	s, err := NewServer(testPort)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = s.Run()
+	if err != nil {
+		t.Error(err)
+	}
+	s.Stop()
+}

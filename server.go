@@ -101,9 +101,9 @@ func (server *Server) Run() error {
 		return err
 	}
 
-	go server.Serve()
+	server.Serve()
 	if server.HasTLS() {
-		go server.ServeTLS()
+		server.ServeTLS()
 	}
 
 	return nil
@@ -156,11 +156,17 @@ func (server *Server) waitForRequests() {
 }
 
 func (server *Server) Serve() {
-	server.Log.Panic(server.listener.Run(server.acceptLoop), "could not run the listener")
+	server.listener.wg.Add(1)
+	go func() {
+		server.Log.Panic(server.listener.Run(server.acceptLoop), "could not run the listener")
+	}()
 }
 
 func (server *Server) ServeTLS() {
-	server.Log.Panic(server.tlsListener.Run(server.acceptLoop), "could not run the TLS listener")
+	server.tlsListener.wg.Add(1)
+	go func() {
+		server.Log.Panic(server.tlsListener.Run(server.acceptLoop), "could not run the TLS listener")
+	}()
 }
 
 func (server *Server) acceptLoop(listener *Listener) error {
