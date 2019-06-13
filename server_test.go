@@ -13,11 +13,11 @@ func TestShutdownSegfault(t *testing.T) {
 	// test for multiple times so that the segfault happens
 	// with a high probability
 	for i := 0; i < 100; i++ {
-		testShutdownSegfault(t)
+		testStop(t)
 	}
 }
 
-func testShutdownSegfault(t *testing.T) {
+func testStop(t *testing.T) {
 	s, err := NewServer(testPort)
 	if err != nil {
 		t.Error(err)
@@ -65,7 +65,7 @@ type testHandler struct {
 	resource *int
 }
 
-func (h *testHandler) Handle(c *Connection) {
+func (h *testHandler) Handle(_ *Connection) {
 	// use the resource that gets removed after Stop()
 	_ = *h.resource
 }

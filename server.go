@@ -128,16 +128,16 @@ func (server *Server) Stop() {
 		server.listener.Wait()
 	}
 
-	server.waitForRequests()
+	server.waitForConnectionsToClose()
 }
 
 // StopDeadline is the hard deadline, after which Server.Stop() does no longer
-// wait for handlers to finish and returns.
+// wait for connections to close and returns.
 var StopDeadline = time.Minute
 
-// waitForRequests waits until all the handlers from listener and tlsListener
-// are done and close their connections.
-func (server *Server) waitForRequests() {
+// waitForConnectionsToClose waits until all the handlers from listener and
+// tlsListener are done and closed their connections.
+func (server *Server) waitForConnectionsToClose() {
 	deadline := time.NewTimer(StopDeadline)
 	for {
 		if server.numConns.Count() == 0 {
@@ -148,7 +148,6 @@ func (server *Server) waitForRequests() {
 		select {
 		case <-deadline.C:
 			server.Log.Warnf("not all requests finished after %v", StopDeadline)
-			deadline.Stop()
 			break
 		case <-time.After(time.Millisecond):
 		}

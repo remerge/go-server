@@ -31,6 +31,7 @@ func NewListener(port int) (listener *Listener, err error) {
 	return listener, nil
 }
 
+// revive:disable:var-naming
 func NewTlsListener(port int, config *tls.Config) (listener *Listener, err error) {
 	listener, err = NewListener(port)
 	if err != nil {
