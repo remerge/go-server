@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/tls"
 	"fmt"
+	"time"
 
 	"github.com/rcrowley/go-metrics"
 	"github.com/remerge/cue"
@@ -100,9 +101,9 @@ func (server *Server) Run() error {
 		return err
 	}
 
-	go server.Serve()
+	server.Serve()
 	if server.HasTLS() {
-		go server.ServeTLS()
+		server.ServeTLS()
 	}
 
 	return nil
@@ -126,14 +127,45 @@ func (server *Server) Stop() {
 		server.Log.Infof("waiting for requests to finish")
 		server.listener.Wait()
 	}
+
+	server.waitForConnectionsToClose()
+}
+
+// StopDeadline is the hard deadline, after which Server.Stop() does no longer
+// wait for connections to close and returns.
+var StopDeadline = time.Minute
+
+// waitForConnectionsToClose waits until all the handlers from listener and
+// tlsListener are done and closed their connections.
+func (server *Server) waitForConnectionsToClose() {
+	deadline := time.NewTimer(StopDeadline)
+	for {
+		if server.numConns.Count() == 0 {
+			server.Log.Infof("all requests finished")
+			break
+		}
+
+		select {
+		case <-deadline.C:
+			server.Log.Warnf("not all requests finished after %v", StopDeadline)
+			break
+		case <-time.After(time.Millisecond):
+		}
+	}
 }
 
 func (server *Server) Serve() {
-	server.Log.Panic(server.listener.Run(server.acceptLoop), "could not run the listener")
+	server.listener.wg.Add(1)
+	go func() {
+		server.Log.Panic(server.listener.Run(server.acceptLoop), "could not run the listener")
+	}()
 }
 
 func (server *Server) ServeTLS() {
-	server.Log.Panic(server.tlsListener.Run(server.acceptLoop), "could not run the TLS listener")
+	server.tlsListener.wg.Add(1)
+	go func() {
+		server.Log.Panic(server.tlsListener.Run(server.acceptLoop), "could not run the TLS listener")
+	}()
 }
 
 func (server *Server) acceptLoop(listener *Listener) error {
