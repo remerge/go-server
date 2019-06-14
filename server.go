@@ -9,8 +9,6 @@ import (
 	"github.com/remerge/cue"
 )
 
-const connTimeout = 100 * time.Millisecond
-
 type Server struct {
 	Id                         string
 	Port                       int
@@ -19,6 +17,7 @@ type Server struct {
 	MaxConns                   int64
 	MaxConcurrentTLSHandshakes int64
 	BufferSize                 int
+	Timeout                    time.Duration // Service timeout. Default is 500ms
 
 	Log     cue.Logger
 	Handler Handler
@@ -36,11 +35,12 @@ type Server struct {
 }
 
 func NewServer(port int) (server *Server, err error) {
-	server = &Server{}
-
-	server.Id = fmt.Sprintf("server:%d", port)
-	server.Port = port
-	server.BufferSize = 32768
+	server = &Server{
+		Id:         fmt.Sprintf("server:%d", port),
+		Port:       port,
+		BufferSize: 32768,
+		Timeout:    500 * time.Millisecond,
+	}
 
 	server.Log = cue.NewLogger(server.Id)
 	server.Log.Infof("new server on port %d", port)
@@ -156,7 +156,7 @@ func (server *Server) acceptLoop(listener *Listener) error {
 		}
 
 		// for cases of probe or blackhole connection
-		if err := conn.SetDeadline(time.Now().Add(connTimeout)); err != nil {
+		if err := conn.SetDeadline(time.Now().Add(server.Timeout)); err != nil {
 			continue
 		}
 
