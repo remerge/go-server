@@ -157,12 +157,10 @@ func (server *Server) acceptLoop(listener *Listener) error {
 
 		// for cases of probe or blackhole connection
 		if err := conn.SetDeadline(time.Now().Add(connTimeout)); err != nil {
-			server.Log.Warnf("can not set deadline for conn: %v", err)
 			continue
 		}
 
 		if server.MaxConns > 0 && server.numConns.Count() > server.MaxConns {
-			// temporary pause accept loop
 			server.tooManyConns.Inc(1)
 			_ = conn.Close()
 			continue

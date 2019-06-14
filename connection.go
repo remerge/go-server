@@ -127,7 +127,6 @@ func (c *Connection) Serve() {
 
 	// reset deadline before handle
 	if err := c.Conn.SetDeadline(time.Time{}); err != nil {
-		c.Server.Log.Warnf("can not reset conn deadline: %v", err)
 		return
 	}
 
@@ -152,7 +151,6 @@ func (c *Connection) Close() {
 	if c.Conn != nil {
 		// set guard deadline in case of bad connection
 		if err := c.Conn.SetDeadline(time.Now().Add(connTimeout)); err != nil {
-			c.Server.Log.Warnf("can not set conn deadline before close: %v", err)
 			return
 		}
 
