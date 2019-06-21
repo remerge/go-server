@@ -185,6 +185,7 @@ func (server *Server) acceptLoop(listener *Listener) error {
 			}
 			return err
 		}
+		server.accepts.Inc(1)
 
 		// for cases of probe or blackhole connection
 		if err := conn.SetDeadline(time.Now().Add(server.Timeout)); err != nil {
@@ -197,7 +198,6 @@ func (server *Server) acceptLoop(listener *Listener) error {
 			continue
 		}
 
-		server.accepts.Inc(1)
 		if tlsConn, ok := conn.(*tls.Conn); ok {
 			if server.MaxConcurrentTLSHandshakes > 0 && server.numHandshakes.Count() >= server.MaxConcurrentTLSHandshakes {
 				server.tooManyConcurrentHandshakes.Inc(1)
