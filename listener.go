@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"sync/atomic"
 
 	"github.com/remerge/cue"
 )
@@ -13,7 +14,7 @@ type Listener struct {
 	net.Listener
 	wg      sync.WaitGroup
 	log     cue.Logger
-	stopped bool
+	stopped int32 // atomic bool
 }
 
 func NewListener(port int) (listener *Listener, err error) {
@@ -46,18 +47,17 @@ func (listener *Listener) Accept() (conn net.Conn, err error) {
 }
 
 func (listener *Listener) Run(callback func(*Listener) error) error {
-	listener.wg.Add(1)
 	defer listener.wg.Done()
 	return callback(listener)
 }
 
 func (listener *Listener) Stop() {
-	listener.stopped = true
+	atomic.StoreInt32(&listener.stopped, 1)
 	_ = listener.Listener.Close()
 }
 
 func (listener *Listener) IsStopped() bool {
-	return listener.stopped
+	return atomic.LoadInt32(&listener.stopped) > 0
 }
 
 func (listener *Listener) Wait() {
