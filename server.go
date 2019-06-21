@@ -188,7 +188,7 @@ func (server *Server) acceptLoop(listener *Listener) error {
 		server.accepts.Inc(1)
 
 		// for cases of probe or blackhole connection
-		if err := conn.SetDeadline(time.Now().Add(server.Timeout)); err != nil {
+		if err = conn.SetDeadline(time.Now().Add(server.Timeout)); err != nil {
 			_ = conn.Close()
 			continue
 		}
