@@ -39,7 +39,7 @@ func NewServer(port int) (server *Server, err error) {
 		Id:         fmt.Sprintf("server:%d", port),
 		Port:       port,
 		BufferSize: 32768,
-		Timeout:    500 * time.Millisecond,
+		Timeout:    3 * time.Second,
 	}
 
 	server.Log = cue.NewLogger(server.Id)
