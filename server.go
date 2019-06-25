@@ -17,7 +17,7 @@ type Server struct {
 	MaxConns                   int64
 	MaxConcurrentTLSHandshakes int64
 	BufferSize                 int
-	Timeout                    time.Duration // Service timeout. Default is 500ms
+	Timeout                    time.Duration // Service timeout. Default is 3s
 
 	Log     cue.Logger
 	Handler Handler
