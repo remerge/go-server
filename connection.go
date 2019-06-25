@@ -151,6 +151,7 @@ func (c *Connection) Close() {
 	if c.Conn != nil {
 		// set guard deadline in case of bad connection
 		if err := c.Conn.SetDeadline(time.Now().Add(c.Server.Timeout)); err != nil {
+			_ = c.Conn.Close()
 			return
 		}
 
