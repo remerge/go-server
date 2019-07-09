@@ -8,6 +8,7 @@ import (
 	"net"
 	"runtime/debug"
 	"sync"
+	"time"
 
 	"github.com/remerge/cue"
 )
@@ -124,6 +125,11 @@ func (c *Connection) Serve() {
 		c.Server.numHandshakes.Dec(1)
 	}
 
+	// reset deadline before handle
+	if err := c.Conn.SetDeadline(time.Time{}); err != nil {
+		return
+	}
+
 	c.Server.Handler.Handle(c)
 }
 
@@ -142,15 +148,21 @@ func (c *Connection) Close() {
 		c.Server.closes.Inc(1)
 	}
 
-	// flush write buffer before close
-	if c.Buffer.Writer != nil {
-		c.Buffer.Writer.Flush()
+	if c.Conn != nil {
+		// set guard deadline in case of bad connection
+		if err := c.Conn.SetDeadline(time.Now().Add(c.Server.Timeout)); err != nil {
+			_ = c.Conn.Close()
+			return
+		}
+
+		// flush write buffer before close
+		if c.Buffer.Writer != nil {
+			_ = c.Buffer.Writer.Flush()
+		}
+		_ = c.Conn.Close()
 	}
 
 	// close socket
-	if c.Conn != nil {
-		c.Conn.Close()
-	}
 
 	// put connection back into pool
 	putConnection(c)

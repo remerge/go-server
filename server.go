@@ -17,6 +17,7 @@ type Server struct {
 	MaxConns                   int64
 	MaxConcurrentTLSHandshakes int64
 	BufferSize                 int
+	Timeout                    time.Duration // Service timeout. Default is 3s
 
 	Log     cue.Logger
 	Handler Handler
@@ -34,11 +35,12 @@ type Server struct {
 }
 
 func NewServer(port int) (server *Server, err error) {
-	server = &Server{}
-
-	server.Id = fmt.Sprintf("server:%d", port)
-	server.Port = port
-	server.BufferSize = 32768
+	server = &Server{
+		Id:         fmt.Sprintf("server:%d", port),
+		Port:       port,
+		BufferSize: 32768,
+		Timeout:    3 * time.Second,
+	}
 
 	server.Log = cue.NewLogger(server.Id)
 	server.Log.Infof("new server on port %d", port)
@@ -183,20 +185,24 @@ func (server *Server) acceptLoop(listener *Listener) error {
 			}
 			return err
 		}
-
 		server.accepts.Inc(1)
 
-		if server.MaxConns > 0 && server.numConns.Count() >= server.MaxConns {
-			// too many connections
+		// for cases of probe or blackhole connection
+		if err = conn.SetDeadline(time.Now().Add(server.Timeout)); err != nil {
+			_ = conn.Close()
+			continue
+		}
+
+		if server.MaxConns > 0 && server.numConns.Count() > server.MaxConns {
 			server.tooManyConns.Inc(1)
-			conn.Close()
+			_ = conn.Close()
 			continue
 		}
 
 		if tlsConn, ok := conn.(*tls.Conn); ok {
 			if server.MaxConcurrentTLSHandshakes > 0 && server.numHandshakes.Count() >= server.MaxConcurrentTLSHandshakes {
 				server.tooManyConcurrentHandshakes.Inc(1)
-				tlsConn.Close()
+				_ = tlsConn.Close()
 				continue
 			}
 			// We need to increase the outstanding handshakes here otherwise we
