@@ -125,12 +125,12 @@ func (c *Connection) Serve() {
 		c.Server.numHandshakes.Dec(1)
 	}
 
-	// reset deadline before handle
-	if err := c.Conn.SetDeadline(time.Time{}); err != nil {
-		return
-	}
-
 	c.Server.Handler.Handle(c)
+}
+
+// Set server timeout for connection
+func (c *Connection) SetTimeout() error {
+	return c.Conn.SetDeadline(time.Now().Add(c.Server.Timeout))
 }
 
 // Close - closes the underlying connection and puts it back in the pool
@@ -150,7 +150,7 @@ func (c *Connection) Close() {
 
 	if c.Conn != nil {
 		// set guard deadline in case of bad connection
-		if err := c.Conn.SetDeadline(time.Now().Add(c.Server.Timeout)); err != nil {
+		if err := c.SetTimeout(); err != nil {
 			_ = c.Conn.Close()
 			return
 		}
