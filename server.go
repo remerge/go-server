@@ -94,13 +94,13 @@ func (server *Server) HasTLS() bool {
 }
 
 func (server *Server) Listen() (err error) {
-	server.listener, err = NewListener(server.Port, server.ctx, server.listenConfig)
+	server.listener, err = NewListener(server.ctx, server.Port, server.listenConfig)
 	if err != nil {
 		return err
 	}
 
 	if server.HasTLS() {
-		server.tlsListener, err = NewTlsListener(server.TlsPort, server.ctx, server.TlsConfig, server.listenConfig)
+		server.tlsListener, err = NewTlsListener(server.ctx, server.TlsPort, server.TlsConfig, server.listenConfig)
 		if err != nil {
 			return err
 		}
