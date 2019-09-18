@@ -18,13 +18,13 @@ type Listener struct {
 	stopped int32 // atomic bool
 }
 
-func NewListener(ctx context.Context, port int, listenConfig *net.ListenConfig) (listener *Listener, err error) {
+func NewListener(port int, listenConfig *net.ListenConfig) (listener *Listener, err error) {
 	listener = &Listener{}
 
 	listener.log = cue.NewLogger(fmt.Sprintf("listener:%d", port))
 	listener.log.Infof("start listen on port %d", port)
 
-	listener.Listener, err = listenConfig.Listen(ctx, "tcp", fmt.Sprintf(":%d", port))
+	listener.Listener, err = listenConfig.Listen(context.Background(), "tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		return nil, err
 	}
@@ -33,8 +33,8 @@ func NewListener(ctx context.Context, port int, listenConfig *net.ListenConfig) 
 }
 
 // revive:disable:var-naming
-func NewTlsListener(ctx context.Context, port int, tlsConfig *tls.Config, listenConfig *net.ListenConfig) (listener *Listener, err error) {
-	listener, err = NewListener(ctx, port, listenConfig)
+func NewTlsListener(port int, tlsConfig *tls.Config, listenConfig *net.ListenConfig) (listener *Listener, err error) {
+	listener, err = NewListener(port, listenConfig)
 	if err != nil {
 		return nil, err
 	}
