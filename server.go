@@ -1,8 +1,10 @@
 package server
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
+	"net"
 	"time"
 
 	"github.com/rcrowley/go-metrics"
@@ -10,10 +12,14 @@ import (
 )
 
 type Server struct {
-	Id                         string
-	Port                       int
-	TlsPort                    int         // revive:disable:var-naming
-	TlsConfig                  *tls.Config // revive:disable:var-naming
+	Id           string
+	Port         int
+	TlsPort      int         // revive:disable:var-naming
+	TlsConfig    *tls.Config // revive:disable:var-naming
+	listenConfig *net.ListenConfig
+	ctx          context.Context
+	cancelFunc   context.CancelFunc
+
 	MaxConns                   int64
 	MaxConcurrentTLSHandshakes int64
 	BufferSize                 int
@@ -34,6 +40,8 @@ type Server struct {
 	tlsErrors                   metrics.Counter
 }
 
+const keepAlive = 3 * time.Minute
+
 func NewServer(port int) (server *Server, err error) {
 	server = &Server{
 		Id:         fmt.Sprintf("server:%d", port),
@@ -44,6 +52,9 @@ func NewServer(port int) (server *Server, err error) {
 
 	server.Log = cue.NewLogger(server.Id)
 	server.Log.Infof("new server on port %d", port)
+
+	server.listenConfig = &net.ListenConfig{KeepAlive: keepAlive}
+	server.ctx, server.cancelFunc = context.WithCancel(context.Background())
 
 	server.accepts = metrics.GetOrRegisterCounter(fmt.Sprintf("rex_server,port=%d accept", port), nil)
 	server.tooManyConns = metrics.GetOrRegisterCounter(fmt.Sprintf("rex_server,port=%d too_many_connection", port), nil)
@@ -83,13 +94,13 @@ func (server *Server) HasTLS() bool {
 }
 
 func (server *Server) Listen() (err error) {
-	server.listener, err = NewListener(server.Port)
+	server.listener, err = NewListener(server.Port, server.ctx, server.listenConfig)
 	if err != nil {
 		return err
 	}
 
 	if server.HasTLS() {
-		server.tlsListener, err = NewTlsListener(server.TlsPort, server.TlsConfig)
+		server.tlsListener, err = NewTlsListener(server.TlsPort, server.ctx, server.TlsConfig, server.listenConfig)
 		if err != nil {
 			return err
 		}
@@ -115,6 +126,8 @@ func (server *Server) Stop() {
 	if server == nil {
 		return
 	}
+
+	server.cancelFunc()
 
 	if server.HasTLS() && server.tlsListener != nil {
 		server.Log.Infof("shutting down TLS listener")
