@@ -16,7 +16,7 @@ import (
 type Connection struct {
 	net.Conn
 	Server      *Server
-	LimitReader io.LimitedReader
+	LimitReader LimitedReader
 	Buffer      bufio.ReadWriter
 }
 
