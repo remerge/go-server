@@ -3,7 +3,6 @@ package server
 import (
 	"crypto/tls"
 	"fmt"
-	"net"
 	"time"
 
 	"github.com/rcrowley/go-metrics"
@@ -11,12 +10,10 @@ import (
 )
 
 type Server struct {
-	Id           string
-	Port         int
-	TlsPort      int         // revive:disable:var-naming
-	TlsConfig    *tls.Config // revive:disable:var-naming
-	listenConfig *net.ListenConfig
-
+	Id                         string
+	Port                       int
+	TlsPort                    int         // revive:disable:var-naming
+	TlsConfig                  *tls.Config // revive:disable:var-naming
 	MaxConns                   int64
 	MaxConcurrentTLSHandshakes int64
 	BufferSize                 int
@@ -37,8 +34,6 @@ type Server struct {
 	tlsErrors                   metrics.Counter
 }
 
-const keepAlive = 3 * time.Minute
-
 func NewServer(port int) (server *Server, err error) {
 	server = &Server{
 		Id:         fmt.Sprintf("server:%d", port),
@@ -49,8 +44,6 @@ func NewServer(port int) (server *Server, err error) {
 
 	server.Log = cue.NewLogger(server.Id)
 	server.Log.Infof("new server on port %d", port)
-
-	server.listenConfig = &net.ListenConfig{KeepAlive: keepAlive}
 
 	server.accepts = metrics.GetOrRegisterCounter(fmt.Sprintf("rex_server,port=%d accept", port), nil)
 	server.tooManyConns = metrics.GetOrRegisterCounter(fmt.Sprintf("rex_server,port=%d too_many_connection", port), nil)
@@ -90,13 +83,13 @@ func (server *Server) HasTLS() bool {
 }
 
 func (server *Server) Listen() (err error) {
-	server.listener, err = NewListener(server.Port, server.listenConfig)
+	server.listener, err = NewListener(server.Port)
 	if err != nil {
 		return err
 	}
 
 	if server.HasTLS() {
-		server.tlsListener, err = NewTlsListener(server.TlsPort, server.TlsConfig, server.listenConfig)
+		server.tlsListener, err = NewTlsListener(server.TlsPort, server.TlsConfig)
 		if err != nil {
 			return err
 		}

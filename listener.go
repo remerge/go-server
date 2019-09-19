@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
 	"net"
@@ -18,13 +17,13 @@ type Listener struct {
 	stopped int32 // atomic bool
 }
 
-func NewListener(port int, listenConfig *net.ListenConfig) (listener *Listener, err error) {
+func NewListener(port int) (listener *Listener, err error) {
 	listener = &Listener{}
 
 	listener.log = cue.NewLogger(fmt.Sprintf("listener:%d", port))
 	listener.log.Infof("start listen on port %d", port)
 
-	listener.Listener, err = listenConfig.Listen(context.Background(), "tcp", fmt.Sprintf(":%d", port))
+	listener.Listener, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		return nil, err
 	}
@@ -33,13 +32,13 @@ func NewListener(port int, listenConfig *net.ListenConfig) (listener *Listener, 
 }
 
 // revive:disable:var-naming
-func NewTlsListener(port int, tlsConfig *tls.Config, listenConfig *net.ListenConfig) (listener *Listener, err error) {
-	listener, err = NewListener(port, listenConfig)
+func NewTlsListener(port int, config *tls.Config) (listener *Listener, err error) {
+	listener, err = NewListener(port)
 	if err != nil {
 		return nil, err
 	}
 
-	listener.Listener = tls.NewListener(listener.Listener, tlsConfig)
+	listener.Listener = tls.NewListener(listener.Listener, config)
 	return listener, nil
 }
 
