@@ -152,17 +152,14 @@ func (c *Connection) Close() {
 		// set guard deadline in case of bad connection
 		if err := c.Conn.SetDeadline(time.Now().Add(c.Server.Timeout)); err != nil {
 			_ = c.Conn.Close()
-			return
+		} else {
+			// flush write buffer before close
+			if c.Buffer.Writer != nil {
+				_ = c.Buffer.Writer.Flush()
+			}
+			_ = c.Conn.Close()
 		}
-
-		// flush write buffer before close
-		if c.Buffer.Writer != nil {
-			_ = c.Buffer.Writer.Flush()
-		}
-		_ = c.Conn.Close()
 	}
-
-	// close socket
 
 	// put connection back into pool
 	putConnection(c)
