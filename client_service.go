@@ -27,13 +27,13 @@ type ServerConfig struct {
 type ClientServiceParams struct {
 	registry.Params
 
-	*ServerConfig `registry:"lazy"`
+	ServerConfig `registry:"lazy"`
 }
 
 type ClientService struct {
 	Server *Server
 
-	config *ServerConfig
+	config ServerConfig
 }
 
 func RegisterService(r service.Registry) {
