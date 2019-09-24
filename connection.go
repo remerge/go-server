@@ -18,6 +18,7 @@ type Connection struct {
 	Server      *Server
 	LimitReader io.LimitedReader
 	Buffer      bufio.ReadWriter
+	closeMutex  sync.Mutex
 }
 
 // NoLimit is an effective infinite upper bound for io.LimitedReader
@@ -39,6 +40,10 @@ func (server *Server) NewConnection(conn net.Conn) *Connection {
 	c.Buffer.Writer = bw
 
 	c.Server.numConns.Inc(1)
+
+	c.Server.connectionsMutex.Lock()
+	defer c.Server.connectionsMutex.Unlock()
+	c.Server.connections[c] = struct{}{}
 	return c
 }
 
@@ -51,6 +56,9 @@ func newConnection() *Connection {
 
 func putConnection(c *Connection) {
 	c.Server.numConns.Dec(1)
+	c.Server.connectionsMutex.Lock()
+	defer c.Server.connectionsMutex.Unlock()
+	delete(c.Server.connections, c)
 
 	c.Conn = nil
 	c.Server = nil
@@ -133,12 +141,7 @@ func (c *Connection) Serve() {
 	c.Server.Handler.Handle(c)
 }
 
-// Close - closes the underlying connection and puts it back in the pool
-// IMPORTANT: this should NEVER be called twice as it is not go routine safe:
-// The connection is put back in the pool and might be taken and reinitialized by
-// another go routine. If Close() is called a second time it will modify the connection
-// that is potentially already in use in a different go routine
-func (c *Connection) Close() {
+func (c *Connection) closeInternal() {
 	// prevent double close
 	if c.Conn == nil {
 		return
@@ -148,19 +151,27 @@ func (c *Connection) Close() {
 		c.Server.closes.Inc(1)
 	}
 
-	if c.Conn != nil {
-		// set guard deadline in case of bad connection
-		if err := c.Conn.SetDeadline(time.Now().Add(c.Server.Timeout)); err != nil {
-			_ = c.Conn.Close()
-		} else {
-			// flush write buffer before close
-			if c.Buffer.Writer != nil {
-				_ = c.Buffer.Writer.Flush()
-			}
-			_ = c.Conn.Close()
-		}
+	if err := c.Conn.SetDeadline(time.Now().Add(c.Server.Timeout)); err != nil {
+		_ = c.Conn.Close()
+		return
 	}
 
+	// flush write buffer before close
+	if c.Buffer.Writer != nil {
+		_ = c.Buffer.Writer.Flush()
+	}
+	_ = c.Conn.Close()
+}
+
+// Close - closes the underlying connection and puts it back in the pool
+// IMPORTANT: this should NEVER be called twice as it is not go routine safe:
+// The connection is put back in the pool and might be taken and reinitialized by
+// another go routine. If Close() is called a second time it will modify the connection
+// that is potentially already in use in a different go routine
+func (c *Connection) Close() {
+	c.closeMutex.Lock()
+	defer c.closeMutex.Unlock()
+	c.closeInternal()
 	// put connection back into pool
 	putConnection(c)
 }

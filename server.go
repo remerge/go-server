@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/tls"
 	"fmt"
+	"sync"
 	"net"
 	"time"
 
@@ -28,10 +29,14 @@ type Server struct {
 	listener    *Listener
 	tlsListener *Listener
 
-	accepts                     metrics.Counter
-	tooManyConns                metrics.Counter
-	closes                      metrics.Counter
-	numConns                    metrics.Counter
+	accepts      metrics.Counter
+	tooManyConns metrics.Counter
+	closes       metrics.Counter
+	numConns     metrics.Counter
+
+	connections      map[*Connection]struct{}
+	connectionsMutex sync.Mutex
+
 	numHandshakes               metrics.Counter
 	tooManyConcurrentHandshakes metrics.Counter
 	tlsErrors                   metrics.Counter
@@ -138,6 +143,14 @@ func (server *Server) Stop() {
 		server.Log.Infof("waiting for requests to finish")
 		server.listener.Wait()
 	}
+
+	server.connectionsMutex.Lock()
+	for c := range server.connections {
+		c.closeMutex.Lock()
+		c.closeInternal()
+		c.closeMutex.Unlock()
+	}
+	server.connectionsMutex.Unlock()
 
 	server.waitForConnectionsToClose()
 }
