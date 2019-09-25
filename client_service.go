@@ -21,7 +21,7 @@ type ServerConfig struct {
 	MaxConns                   int64
 	MaxConcurrentTLSHandshakes int64
 
-	Handler Handler
+	CreateHandler func() Handler
 }
 
 type ClientServiceParams struct {
@@ -92,7 +92,7 @@ func (s *ClientService) Init() error {
 
 	s.Server.MaxConns = s.config.MaxConns
 	s.Server.MaxConcurrentTLSHandshakes = s.config.MaxConcurrentTLSHandshakes
-	s.Server.Handler = s.config.Handler
+	s.Server.Handler = s.config.CreateHandler()
 
 	return s.Server.Run()
 }
