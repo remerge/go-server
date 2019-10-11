@@ -3,8 +3,8 @@ package server
 import (
 	"crypto/tls"
 	"fmt"
-	"sync"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/rcrowley/go-metrics"
