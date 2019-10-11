@@ -46,10 +46,11 @@ type Server struct {
 
 func NewServer(port int) (server *Server, err error) {
 	server = &Server{
-		Id:         fmt.Sprintf("server:%d", port),
-		Port:       port,
-		BufferSize: 32768,
-		Timeout:    3 * time.Second,
+		Id:          fmt.Sprintf("server:%d", port),
+		Port:        port,
+		BufferSize:  32768,
+		Timeout:     3 * time.Second,
+		connections: make(map[*Connection]struct{}),
 	}
 
 	server.Log = cue.NewLogger(server.Id)
