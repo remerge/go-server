@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/rcrowley/go-metrics"
@@ -28,10 +29,14 @@ type Server struct {
 	listener    *Listener
 	tlsListener *Listener
 
-	accepts                     metrics.Counter
-	tooManyConns                metrics.Counter
-	closes                      metrics.Counter
-	numConns                    metrics.Counter
+	accepts      metrics.Counter
+	tooManyConns metrics.Counter
+	closes       metrics.Counter
+	numConns     metrics.Counter
+
+	connections      map[*Connection]struct{}
+	connectionsMutex sync.Mutex
+
 	numHandshakes               metrics.Counter
 	tooManyConcurrentHandshakes metrics.Counter
 	tlsErrors                   metrics.Counter
@@ -41,10 +46,11 @@ type Server struct {
 
 func NewServer(port int) (server *Server, err error) {
 	server = &Server{
-		Id:         fmt.Sprintf("server:%d", port),
-		Port:       port,
-		BufferSize: 32768,
-		Timeout:    3 * time.Second,
+		Id:          fmt.Sprintf("server:%d", port),
+		Port:        port,
+		BufferSize:  32768,
+		Timeout:     3 * time.Second,
+		connections: make(map[*Connection]struct{}),
 	}
 
 	server.Log = cue.NewLogger(server.Id)
@@ -138,6 +144,14 @@ func (server *Server) Stop() {
 		server.Log.Infof("waiting for requests to finish")
 		server.listener.Wait()
 	}
+
+	server.connectionsMutex.Lock()
+	for c := range server.connections {
+		c.closeMutex.Lock()
+		c.closeInternal()
+		c.closeMutex.Unlock()
+	}
+	server.connectionsMutex.Unlock()
 
 	server.waitForConnectionsToClose()
 }
