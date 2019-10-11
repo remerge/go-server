@@ -170,8 +170,8 @@ func (c *Connection) closeInternal() {
 // that is potentially already in use in a different go routine
 func (c *Connection) Close() {
 	c.closeMutex.Lock()
-	defer c.closeMutex.Unlock()
 	c.closeInternal()
+	c.closeMutex.Unlock()
 	// put connection back into pool
 	putConnection(c)
 }
