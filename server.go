@@ -37,7 +37,7 @@ type Server struct {
 	tlsErrors                   metrics.Counter
 }
 
-const keepAlive = 3 * time.Minute
+//const keepAlive = 3 * time.Minute
 
 func NewServer(port int) (server *Server, err error) {
 	server = &Server{
@@ -50,7 +50,9 @@ func NewServer(port int) (server *Server, err error) {
 	server.Log = cue.NewLogger(server.Id)
 	server.Log.Infof("new server on port %d", port)
 
-	server.listenConfig = &net.ListenConfig{KeepAlive: keepAlive}
+	server.listenConfig = &net.ListenConfig{
+		//KeepAlive: keepAlive,
+	}
 
 	server.accepts = metrics.GetOrRegisterCounter(fmt.Sprintf("rex_server,port=%d accept", port), nil)
 	server.tooManyConns = metrics.GetOrRegisterCounter(fmt.Sprintf("rex_server,port=%d too_many_connection", port), nil)
