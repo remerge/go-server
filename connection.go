@@ -57,8 +57,8 @@ func newConnection() *Connection {
 func putConnection(c *Connection) {
 	c.Server.numConns.Dec(1)
 	c.Server.connectionsMutex.Lock()
-	defer c.Server.connectionsMutex.Unlock()
 	delete(c.Server.connections, c)
+	c.Server.connectionsMutex.Unlock()
 
 	c.Conn = nil
 	c.Server = nil
