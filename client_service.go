@@ -9,8 +9,6 @@ import (
 )
 
 type ServerConfig struct {
-	DefaultPort int
-
 	Port int
 	TLS  struct {
 		Port int
@@ -52,7 +50,7 @@ func (s *ClientService) configureFlags(cmd *cobra.Command) {
 
 	flags.IntVar(
 		&s.config.Port,
-		"server-port", s.config.DefaultPort,
+		"server-port", s.config.Port,
 		"HTTP server port",
 	)
 
