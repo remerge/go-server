@@ -3,10 +3,12 @@ package server
 import (
 	"os"
 
-	"github.com/remerge/go-service"
-	"github.com/remerge/go-service/registry"
 	"github.com/spf13/cobra"
 )
+
+type Registry interface {
+	Register(interface{}, ...interface{}) (func(...interface{}) (interface{}, error), error)
+}
 
 type ServerConfig struct {
 	Port int
@@ -22,22 +24,15 @@ type ServerConfig struct {
 	Handler func() Handler
 }
 
-type ClientServiceParams struct {
-	registry.Params
-
-	ServerConfig `registry:"lazy"`
-}
-
 type ClientService struct {
 	Server *Server
-
-	config ServerConfig
+	config *ServerConfig
 }
 
-func RegisterService(r service.Registry) {
-	r.Register(func(cmd *cobra.Command, p *ClientServiceParams) (*ClientService, error) {
+func RegisterService(r Registry) {
+	r.Register(func(cmd *cobra.Command, config *ServerConfig) (*ClientService, error) {
 		s := &ClientService{
-			config: p.ServerConfig,
+			config: config,
 		}
 		s.configureFlags(cmd)
 
