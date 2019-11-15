@@ -24,14 +24,14 @@ type ServerConfig struct {
 	Handler func() Handler
 }
 
-type ClientService struct {
+type Service struct {
 	Server *Server
 	config *ServerConfig
 }
 
 func RegisterService(r Registry) {
-	r.Register(func(cmd *cobra.Command, config *ServerConfig) (*ClientService, error) {
-		s := &ClientService{
+	r.Register(func(cmd *cobra.Command, config *ServerConfig) (*Service, error) {
+		s := &Service{
 			config: config,
 		}
 		s.configureFlags(cmd)
@@ -40,7 +40,7 @@ func RegisterService(r Registry) {
 	})
 }
 
-func (s *ClientService) configureFlags(cmd *cobra.Command) {
+func (s *Service) configureFlags(cmd *cobra.Command) {
 	flags := cmd.Flags()
 
 	flags.IntVar(
@@ -69,7 +69,7 @@ func (s *ClientService) configureFlags(cmd *cobra.Command) {
 
 }
 
-func (s *ClientService) Init() error {
+func (s *Service) Init() error {
 	var err error
 
 	s.Server, err = NewServerWithTLS(
@@ -90,7 +90,7 @@ func (s *ClientService) Init() error {
 	return s.Server.Run()
 }
 
-func (s *ClientService) Shutdown(os.Signal) {
+func (s *Service) Shutdown(os.Signal) {
 	if s.Server != nil {
 		s.Server.Stop()
 	}
