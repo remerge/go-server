@@ -3,10 +3,12 @@ package server
 import (
 	"os"
 
-	"github.com/remerge/go-service"
-	"github.com/remerge/go-service/registry"
 	"github.com/spf13/cobra"
 )
+
+type Registry interface {
+	Register(interface{}, ...interface{}) (func(...interface{}) (interface{}, error), error)
+}
 
 type ServerConfig struct {
 	Port int
@@ -22,22 +24,15 @@ type ServerConfig struct {
 	Handler func() Handler
 }
 
-type ClientServiceParams struct {
-	registry.Params
-
-	ServerConfig `registry:"lazy"`
-}
-
-type ClientService struct {
+type Service struct {
 	Server *Server
-
-	config ServerConfig
+	config *ServerConfig
 }
 
-func RegisterService(r service.Registry) {
-	r.Register(func(cmd *cobra.Command, p *ClientServiceParams) (*ClientService, error) {
-		s := &ClientService{
-			config: p.ServerConfig,
+func RegisterService(r Registry) {
+	r.Register(func(cmd *cobra.Command, config *ServerConfig) (*Service, error) {
+		s := &Service{
+			config: config,
 		}
 		s.configureFlags(cmd)
 
@@ -45,7 +40,7 @@ func RegisterService(r service.Registry) {
 	})
 }
 
-func (s *ClientService) configureFlags(cmd *cobra.Command) {
+func (s *Service) configureFlags(cmd *cobra.Command) {
 	flags := cmd.Flags()
 
 	flags.IntVar(
@@ -74,7 +69,7 @@ func (s *ClientService) configureFlags(cmd *cobra.Command) {
 
 }
 
-func (s *ClientService) Init() error {
+func (s *Service) Init() error {
 	var err error
 
 	s.Server, err = NewServerWithTLS(
@@ -95,7 +90,7 @@ func (s *ClientService) Init() error {
 	return s.Server.Run()
 }
 
-func (s *ClientService) Shutdown(os.Signal) {
+func (s *Service) Shutdown(os.Signal) {
 	if s.Server != nil {
 		s.Server.Stop()
 	}
