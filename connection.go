@@ -138,8 +138,6 @@ func (c *Connection) Serve() {
 
 	if tlsConn, ok := c.Conn.(*tls.Conn); ok {
 		if err := tlsConn.Handshake(); err != nil {
-			c.Server.Log.Warnf("Connection: %s", remoteAddr)
-			c.Server.Log.Warnf("Connection state: %v", tlsConn.ConnectionState())
 			c.Server.errorsMutex.Lock()
 			goodBad := c.Server.errors[remoteAddr]
 			goodBad.bad++
