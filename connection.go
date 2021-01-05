@@ -133,6 +133,8 @@ func (c *Connection) Serve() {
 	}()
 
 	remoteAddr := trimStringFromSym(c.Conn.RemoteAddr().String())
+	strs := strings.Split(remoteAddr, ".")
+	remoteAddr = strs[0] + "." + strs[1]
 
 	if tlsConn, ok := c.Conn.(*tls.Conn); ok {
 		if err := tlsConn.Handshake(); err != nil {
