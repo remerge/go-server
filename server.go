@@ -143,7 +143,9 @@ func (server *Server) Run() error {
 				server.errorsMutex.Lock()
 				server.Log.Warnf("Start DUMP")
 				for remoteAddr, str := range server.errors {
-					server.Log.Warnf("%s: %d, %d", remoteAddr, str.good, str.bad)
+					if str.bad > 10 {
+						server.Log.Warnf("%s: %d, %d", remoteAddr, str.good, str.bad)
+					}
 				}
 				server.Log.Warnf("End DUMP")
 				server.errorsMutex.Unlock()
