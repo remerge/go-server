@@ -147,14 +147,19 @@ func (c *Connection) Serve() {
 			c.Server.numHandshakes.Dec(1)
 			return
 		}
+		c.Server.errorsMutex.Lock()
+		goodBad := c.Server.errors[remoteAddr]
+		goodBad.goodTls++
+		c.Server.errors[remoteAddr] = goodBad
+		c.Server.errorsMutex.Unlock()
 		c.Server.numHandshakes.Dec(1)
+	} else {
+		c.Server.errorsMutex.Lock()
+		goodBad := c.Server.errors[remoteAddr]
+		goodBad.goodNonTls++
+		c.Server.errors[remoteAddr] = goodBad
+		c.Server.errorsMutex.Unlock()
 	}
-
-	c.Server.errorsMutex.Lock()
-	goodBad := c.Server.errors[remoteAddr]
-	goodBad.good++
-	c.Server.errors[remoteAddr] = goodBad
-	c.Server.errorsMutex.Unlock()
 
 	// reset deadline before handle
 	if err := c.Conn.SetDeadline(time.Time{}); err != nil {
