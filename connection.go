@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"runtime/debug"
+	"strings"
 	"sync"
 	"time"
 
@@ -111,6 +112,13 @@ func putBufioWriter(bw *bufio.Writer) {
 	bufioWriterPool.Put(bw)
 }
 
+func trimStringFromSym(s string) string {
+	if idx := strings.Index(s, ":"); idx != -1 {
+		return s[:idx]
+	}
+	return s
+}
+
 func (c *Connection) Serve() {
 	defer func() {
 		if err := recover(); err != nil {
@@ -124,7 +132,7 @@ func (c *Connection) Serve() {
 		c.Close()
 	}()
 
-	remoteAddr := c.Conn.RemoteAddr().String()
+	remoteAddr := trimStringFromSym(c.Conn.RemoteAddr().String())
 
 	if tlsConn, ok := c.Conn.(*tls.Conn); ok {
 		if err := tlsConn.Handshake(); err != nil {
