@@ -50,7 +50,7 @@ func NewServer(port int) (server *Server, err error) {
 		Id:          fmt.Sprintf("server:%d", port),
 		Port:        port,
 		BufferSize:  32768,
-		Timeout:     3 * time.Second,
+		Timeout:     15 * time.Second,
 		connections: make(map[*Connection]struct{}),
 	}
 
