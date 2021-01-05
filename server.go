@@ -12,9 +12,8 @@ import (
 )
 
 type GoodBadConnections struct {
-	goodTls    int
-	goodNonTls int
-	bad        int
+	goodTls int
+	bad     int
 }
 
 type Server struct {
@@ -144,8 +143,8 @@ func (server *Server) Run() error {
 				server.errorsMutex.Lock()
 				server.Log.Warnf("Start DUMP")
 				for remoteAddr, str := range server.errors {
-					if str.bad > 10 {
-						server.Log.Warnf("%s: GoodTLS: %d, GoodNotTLS %d, Bad %d", remoteAddr, str.goodTls, str.goodNonTls, str.bad)
+					if str.bad > 10 || str.goodTls > 100 {
+						server.Log.Warnf("%s: GoodTLS: %d, Bad %d", remoteAddr, str.goodTls, str.bad)
 					}
 				}
 				server.Log.Warnf("End DUMP")

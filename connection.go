@@ -153,12 +153,6 @@ func (c *Connection) Serve() {
 		c.Server.errors[remoteAddr] = goodBad
 		c.Server.errorsMutex.Unlock()
 		c.Server.numHandshakes.Dec(1)
-	} else {
-		c.Server.errorsMutex.Lock()
-		goodBad := c.Server.errors[remoteAddr]
-		goodBad.goodNonTls++
-		c.Server.errors[remoteAddr] = goodBad
-		c.Server.errorsMutex.Unlock()
 	}
 
 	// reset deadline before handle
