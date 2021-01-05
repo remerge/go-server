@@ -30,6 +30,7 @@ type Server struct {
 	tlsListener *Listener
 
 	accepts      metrics.Counter
+	tlsAccepts   metrics.Counter
 	tooManyConns metrics.Counter
 	closes       metrics.Counter
 	numConns     metrics.Counter
@@ -61,6 +62,7 @@ func NewServer(port int) (server *Server, err error) {
 	}
 
 	server.accepts = metrics.GetOrRegisterCounter(fmt.Sprintf("rex_server,port=%d accept", port), nil)
+	server.tlsAccepts = metrics.GetOrRegisterCounter(fmt.Sprintf("rex_server,port=%d tls_accept", port), nil)
 	server.tooManyConns = metrics.GetOrRegisterCounter(fmt.Sprintf("rex_server,port=%d too_many_connection", port), nil)
 	server.closes = metrics.GetOrRegisterCounter(fmt.Sprintf("rex_server,port=%d close", port), nil)
 	server.numConns = metrics.GetOrRegisterCounter(fmt.Sprintf("rex_server,port=%d connection", port), nil)
@@ -209,6 +211,9 @@ func (server *Server) acceptLoop(listener *Listener) error {
 			return err
 		}
 		server.accepts.Inc(1)
+		if _, ok := conn.(*tls.Conn); ok {
+			server.tlsAccepts.Inc(1)
+		}
 
 		// for cases of probe or blackhole connection
 		if err = conn.SetDeadline(time.Now().Add(server.Timeout)); err != nil {
