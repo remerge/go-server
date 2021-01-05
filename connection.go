@@ -124,16 +124,29 @@ func (c *Connection) Serve() {
 		c.Close()
 	}()
 
+	remoteAddr := c.Conn.RemoteAddr().String()
+
 	if tlsConn, ok := c.Conn.(*tls.Conn); ok {
 		if err := tlsConn.Handshake(); err != nil {
-			c.Server.Log.Warnf("Connection: %s", tlsConn.RemoteAddr().String())
+			c.Server.Log.Warnf("Connection: %s", remoteAddr)
 			c.Server.Log.Warnf("NEW TLS ERRROR: %s", err)
+			c.Server.errorsMutex.Lock()
+			goodBad := c.Server.errors[remoteAddr]
+			goodBad.bad++
+			c.Server.errors[remoteAddr] = goodBad
+			c.Server.errorsMutex.Unlock()
 			c.Server.tlsErrors.Inc(1)
 			c.Server.numHandshakes.Dec(1)
 			return
 		}
 		c.Server.numHandshakes.Dec(1)
 	}
+
+	c.Server.errorsMutex.Lock()
+	goodBad := c.Server.errors[remoteAddr]
+	goodBad.good++
+	c.Server.errors[remoteAddr] = goodBad
+	c.Server.errorsMutex.Unlock()
 
 	// reset deadline before handle
 	if err := c.Conn.SetDeadline(time.Time{}); err != nil {

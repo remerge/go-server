@@ -11,6 +11,11 @@ import (
 	"github.com/remerge/cue"
 )
 
+type GoodBadConnections struct {
+	good int
+	bad  int
+}
+
 type Server struct {
 	Id           string
 	Port         int
@@ -35,6 +40,9 @@ type Server struct {
 	closes       metrics.Counter
 	numConns     metrics.Counter
 
+	errors      map[string]GoodBadConnections
+	errorsMutex sync.Mutex
+
 	connections      map[*Connection]struct{}
 	connectionsMutex sync.Mutex
 
@@ -52,6 +60,7 @@ func NewServer(port int) (server *Server, err error) {
 		BufferSize:  32768,
 		Timeout:     15 * time.Second,
 		connections: make(map[*Connection]struct{}),
+		errors:      make(map[string]GoodBadConnections),
 	}
 
 	server.Log = cue.NewLogger(server.Id)
@@ -124,6 +133,23 @@ func (server *Server) Run() error {
 	if server.HasTLS() {
 		server.ServeTLS()
 	}
+
+	ticker := time.NewTicker(50 * time.Second)
+
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				server.errorsMutex.Lock()
+				server.Log.Warnf("Start DUMP")
+				for remoteAddr, str := range server.errors {
+					server.Log.Warnf("%s: %d, %d", remoteAddr, str.good, str.bad)
+				}
+				server.Log.Warnf("End DUMP")
+				server.errorsMutex.Unlock()
+			}
+		}
+	}()
 
 	return nil
 }
