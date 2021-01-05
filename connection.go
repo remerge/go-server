@@ -126,6 +126,7 @@ func (c *Connection) Serve() {
 
 	if tlsConn, ok := c.Conn.(*tls.Conn); ok {
 		if err := tlsConn.Handshake(); err != nil {
+			c.Server.Log.Warnf("TLS ERRROR: %s", err)
 			c.Server.tlsErrors.Inc(1)
 			c.Server.numHandshakes.Dec(1)
 			return
