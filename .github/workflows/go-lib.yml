@@ -10,5 +10,3 @@ on:
 jobs:
   go-checks:
     uses: remerge/workflows/.github/workflows/go-checks.yml@main
-    secrets:
-      ssh_key: ${{ secrets.DEPLOY_USER_SSH_KEY }}
