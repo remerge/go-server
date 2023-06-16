@@ -1,6 +1,6 @@
 module github.com/remerge/go-server
 
-go 1.18
+go 1.20
 
 require (
 	github.com/rcrowley/go-metrics v0.0.0-20180503174638-e2704e165165
