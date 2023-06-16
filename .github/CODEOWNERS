@@ -1,0 +1,6 @@
+# By default all files are owned by the project owner
+* @remerge/core
+
+# Terraform code is owned by the SRE team for required reviews
+*.tf @remerge/sre
+*.tfvars @remerge/sre

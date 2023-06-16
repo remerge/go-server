@@ -1,7 +1,10 @@
-name: Optional Go checks
+---
+name: go-optional
 on:
   schedule:
-  - cron: "30 0 * * 0"
+    - cron: "30 0 * * 0"
+
+permissions: read-all
 
 jobs:
   go-modules:

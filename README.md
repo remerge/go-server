@@ -1,6 +1,6 @@
 # go-server
 
-Package `server` provides a 
+Package `server` provides a
 
 ## Install
 
@@ -19,11 +19,11 @@ type serverHandler struct {
 }
 
 func (h *serverHandler) Handle(c *server.Connection) {
-	// Handle stuff here
+ // Handle stuff here
 }
 
 func main() {
-	s, _ := server.NewServer(12345)
+ s, _ := server.NewServer(12345)
     s.Handler = &serverHandler{}
     s.Run()
 }

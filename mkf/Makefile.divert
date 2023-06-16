@@ -41,7 +41,8 @@ divert-stop: .check-divert-on
 		sudo systemctl restart $(PROJECT) && \
 		sudo rm -f $(BIN).original && \
 		sudo rm -f $(BIN_DIVERTED) && \
-		sudo systemctl start chef-client'
+		sudo systemctl start chef-client && \
+		sudo chef-client > /dev/null 2>&1 &'
 
 divert-journal: .check-divert-var
 	ssh $(DIVERT_SSH) 'sudo journalctl -fu $(PROJECT)'

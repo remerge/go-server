@@ -1,54 +1,57 @@
 # go-makefile
 
-Shared Makefile includes ([common, app, divert](#includes)) for remerge Go projects.
+Shared Makefile includes ([common, app, divert](#includes)) for remerge Go
+projects.
 
-> For how to inlcude this in a new project see [Setup](#setup).
+Provides the following targets (if not specified - defined in
+[common](#includes)).
 
-Provides the following targets (if not specified - defined in [common](#includes)).
-
-# Building binaries ([app](#includes))
+## Building binaries ([app](#includes))
 
 To build a binary matching the local architecture.
 
-```
+```shell
 make local
 ```
 
 The resulting binary can be found in `.build/`.
 
+To build a binary that matches the architecture of our servers (run by the CI as
+well).
 
-To build a binary that matches the architecture of our servers (run by the CI as well).
-
-
-```
+```shell
 make dist
 ```
 
-For a specific OS/architecture the hidden target `.build/<app>.<os>.<arch>` can be used.
+For a specific OS/architecture the hidden target `.build/<app>.<os>.<arch>` can
+be used.
 
 ## Go versions
 
-One of easiest ways to use multiple Go versions is [golang.org/dl](https://github.com/golang/dl):
+One of easiest ways to use multiple Go versions is
+[golang.org/dl](https://github.com/golang/dl):
 
-```
+```shell
 GO111MODULE=off go get golang.org/dl/go1.11.6
 go1.11.6 download
 PATH=$HOME/sdk/go1.11.6/bin make lint test
 ```
 
-Go version is not counted by Make targets. Use `make clean` to ensure that 
+Go version is not counted by Make targets. Use `make clean` to ensure that
 artifacts are built against correct version.
 
-```
+```shell
 make clean && PATH=$HOME/sdk/go1.11.6/bin make lint test
 ```
 
-# Generating artifacts
+## Generating artifacts
 
-We use `go generate` to generate various artefacts (parsers and more). The `gen` target can be used to trigger the generation.
+We use `go generate` to generate various artefacts (parsers and more). The `gen`
+target can be used to trigger the generation.
 
-    make gen
-
+```shell
+make gen
+```
 
 ## Testing
 
@@ -65,57 +68,52 @@ Behaviour can be altered with following variables:
 - `TEST_TAGS` Use specific tags for tests delimited by comma
 - `TEST_ARGS` Additional test arguments
 
-```
-$ make test TESTS=TestSomething TEST_TAGS="integration,postgres" TEST_ARGS=-v
+```shell
+make test TESTS=TestSomething TEST_TAGS="integration,postgres" TEST_ARGS=-v
 ```
 
 To run the tests without test caching use `test-nocache` (and `race-nocache`)
-It's highly recommends to use the `*-nocache` targets in CI to detect fragile tests.
-
+It's highly recommends to use the `*-nocache` targets in CI to detect fragile
+tests.
 
 ## watching changes
 
 Watch your Go code for changes, rebuild and run test on change.
 
-    make watch T=NameOfTestWithoutTestPrefix
+```shell
+make watch T=NameOfTestWithoutTestPrefix
+```
 
+## Linting
 
-# Linting
+This target lints the source code using various tools: `go fmt`, `goimports`,
+the modules consistency check, `go check`, `go vet` and `revive`.
 
-This target lints the source code using various tools: `go fmt`, `goimports`, the modules consistency check, `go check`, `go vet` and `revive`.
-
-    make lint
+```shell
+make lint
+```
 
 > The target will not change sources.
 
-`lint-mod-outdated` checks all modules are up to date. It's disabled until 
-we migrate to upstream pq and sarama.
-
-## Buildsystem
-
-`lint-mkf` checks that `go-makefile` is up to date. Use `make update-makefile` 
-to update if `lint-mkf` target fails. Set `MKF_BRANCH` to test using a 
-different `go-makefile` branch. 
-
-If your repository is public and CI is unable to access `go-makefile`, remove 
-the `lint-mkf` step in the CI config.
+`lint-mod-outdated` checks all modules are up to date. It's disabled until we
+migrate to upstream pq and sarama.
 
 ## vet configuration
 
 To use specific vet flags use `VET_FLAGS` variable.
 
-```
+```make
 VET_FLAGS = -unsafeptr=false
 include mkf/Makefile.common
-``` 
+```
 
 ## revive configuration
 
-Revive will be installed automatically if it us not present. To 
-override revive config put `revive.toml` in root of build tree. 
-Use `REVIVELINTER_EXCLUDES` variable to add excludes.
+Revive will be installed automatically if it is not present. To override revive
+config put `revive.toml` in root of build tree. Use `REVIVELINTER_EXCLUDES`
+variable to add excludes.
 
-```
+```make
 REVIVELINTER_EXCLUDES = $(foreach p,$(wildcard **/*_fsm.go),-exclude $(p))
 include mkf/Makefile.common
 ```
@@ -124,38 +122,47 @@ include mkf/Makefile.common
 
 Use `GOFMT_EXCLUDES` variable to exclude files from import checking.
 
-```
+```make
 GOFMT_EXCLUDES = -not -path "./vendor/*"
 include mkf/Makefile.common
 ```
 
-# Deploying ([app](#includes))
+## Deploying ([app](#includes))
 
-We use Chef to deploy binaries to our servers. The git branch that is used to build bianries from is `production`.
-If changes to the production branch are detected, the CI executes our test suite and if succesfull builds a new binary.
-Usually the new binary is roled out to all servers within a window of 30 minutes.
+We use Chef to deploy binaries to our servers. The git branch that is used to
+build bianries from is `production`. If changes to the production branch are
+detected, the CI executes our test suite and if succesfull builds a new binary.
+Usually the new binary is roled out to all servers within a window of 30
+minutes.
 
-The `release` target can be used to trigger this process. It pushes the current `master` branch to `production`.
+The `release` target can be used to trigger this process. It pushes the current
+`master` branch to `production`.
 
-    make release
+```shell
+make release
+```
 
-If the deployment needs to be done faster (enforced) the `deploy` target can be used. **This should only be used if there is a good reason!**
+If the deployment needs to be done faster (enforced) the `deploy` target can be
+used. **This should only be used if there is a good reason!**
 
-    make deploy
+```shell
+make deploy
+```
 
+## Modules
 
-# Modules
+To clean update the modules include via `go.mod` you can use the `mod-tidy`
+target.
 
-To clean update the modules include via `go.mod` you can use the `mod-tidy` target.
+```shell
+make mod-tidy
+```
 
-    make mod-tidy
+## Isolated test deployment ([divert](#includes))
 
-
-
-# Isolated test deployment ([divert](#includes))
-
-In very rare case a custom build needs to be deployed in production. Diversions make this possible.
-**This should be use carefully and only under special curcumstances**
+In very rare case a custom build needs to be deployed in production. Diversions
+make this possible. **This should be use carefully and only under special
+curcumstances**
 
 ## Requirements
 
@@ -178,55 +185,32 @@ Alternatively `DIVERT_SSH` can be defined globally:
 export DIVERT_SSH=user@app.machine
 ```
 
-> Diversion status can be checked with the  `divert-status` target.
+> Diversion status can be checked with the `divert-status` target.
 
-To build and upload a custom build the divert target can be used. It stops the chef client, copies the custom build binary to the server and restarts the service with the new binary.
+To build and upload a custom build the divert target can be used. It stops the
+chef client, copies the custom build binary to the server and restarts the
+service with the new binary.
 
-If there is already a custom build binary running and it should be replaced with an updated version, use the `divert-update` target.
+If there is already a custom build binary running and it should be replaced with
+an updated version, use the `divert-update` target.
 
-Use `divert-stop` to end the diversion, switch back to the last production binary and restart chef-client.  
+Use `divert-stop` to end the diversion, switch back to the last production
+binary and restart chef-client.
 
 Use `divert-journal` to follow application log. This target is not depends on
 diverted environment.
 
-# Setup
+## Includes
 
-For a new project that does not use the common Makefile includes yet, add this repository as a subtree to the project repository.
+- **common** (`Makefile.common`) basic Go targets
+- **app** (`Makefile.app`): common targets for building binaries and deploy them
+- **divert** (`Makefile.divert`) for deploying temporarly deploying development
+  binaries to production
 
-```
-git remote add makefile https://github.com/remerge/go-makefile.git
-git subtree add --squash --prefix mkf/ makefile master
-```
+## Example top level Makefile
 
-Afterwards `mkf/Makefile.common` can be included in the parent project. If the project is a service that is compiled into a binary `mkf/Makefile.app` and `mkf/Makefile.divert` should be included as well.
-
-#### Includes
-
-* **common** (`Makefile.common`) basic Go targets 
-* **app** (`Makefile.app`): common targets for building binaries and deploy them
-* **divert** (`Makefile.divert`) for deploying temporarly deploying development binaries to production
-
-### Example top level Makefile
-
-```Makefile
+```make
 REVIVELINTER_EXCLUDES = $(foreach p,$(wildcard **/*_fsm.go),-exclude $(p))
 
 include mkf/Makefile.common mkf/Makefile.app mkf/Makefile.divert
 ```
-
-## Updating
-
-To update the Makefile includes in the current repository.
-
-    make update-makefile
-
-
-## CircleCI configuration
-
-To setup a project for CirlceCI please read the [Setup CircleCI guide in Confluence](https://remerge.atlassian.net/wiki/spaces/tech/pages/4030889/Creating+a+new+Go+project). This uses the config file in the `.circleci` folder as a starting point.
-
-## GitHub Actions configurations
-
-Create `.github/workflows` directory. Depending on type of project (Application / Library) link `go-app.yml` or `go-lib.yml` from `github` directory. For nonstandard settings use copy as starting point.
-
-Also link `go-optional.yml` for weekly sanity checks.

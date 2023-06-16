@@ -29,7 +29,6 @@ warningCode = 1
 [rule.indent-error-flow]
 [rule.modifies-parameter]
 [rule.modifies-value-receiver]
-[rule.package-comments]
 [rule.range-val-in-closure]
 [rule.range]
 [rule.receiver-naming]
