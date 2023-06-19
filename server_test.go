@@ -9,6 +9,9 @@ import (
 // some random high port for testing
 const testPort = 60863
 
+// TestShutdownSegfault can fail on CI due to every new round of tests requires more time than a previous one.
+// So one by one this leads to a timeout. The timeout is caused by waiting for a resource.
+// The resource which is actively leveraged in the test is a file/socket descriptor.
 func TestShutdownSegfault(t *testing.T) {
 	// test for multiple times so that the segfault happens
 	// with a high probability

@@ -3,12 +3,12 @@ on:
   pull_request:
   push:
     branches:
-    - master
-    - main
-    - production
+      - master
+      - main
+      - production
 
 jobs:
   go-checks:
+    with:
+      goprivate: ''
     uses: remerge/workflows/.github/workflows/go-checks.yml@main
-    secrets:
-      ssh_key: ${{ secrets.DEPLOY_USER_SSH_KEY }}
