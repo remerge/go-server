@@ -28,8 +28,9 @@ export GOPRIVATE ?= github.com/remerge/*
 
 TOOLS ?= $(MKF_PREFIX)/.tools
 $(TOOLS)/%:
-	test -x "$@" || GO111MODULE=off GOBIN=$(shell pwd)/$(dir $@) go get -u $*
-
+	test -x $(TOOLS)/golang.org/x/tools/cmd/goimports || GOBIN=$(shell pwd)/$(TOOLS)/golang.org/x/tools/cmd go install golang.org/x/tools/cmd/goimports@v0.9.3
+	test -x $(TOOLS)/golang.org/x/tools/cmd/shadow || GOBIN=$(shell pwd)/$(TOOLS)/golang.org/x/tools/cmd go install golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow@v0.9.3
+	test -x $(TOOLS)/github.com/mgechev/revive || GOBIN=$(shell pwd)/$(TOOLS)/github.com/mgechev/revive go install github.com/mgechev/revive@v1.2.3
 
 # Code maintenance
 
@@ -122,12 +123,12 @@ lint-mkf: check-makefile-remote
 	go vet $(VET_FLAGS) ./...
 .NOTPARALLEL: .lint-vet
 
-.lint-shadow: $(TOOLS)/golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow $(GO_SOURCES) ## run shadow linter
+.lint-shadow: $(TOOLS)/golang.org/x/tools/cmd/shadow $(GO_SOURCES) ## run shadow linter
 	go vet -vettool=$< ./...
 .NOTPARALLEL: .lint-shadow
 
 REVIVE_CONFIG = $(or $(wildcard revive.toml),$(MKF_PREFIX)/revive.toml)
-.lint-revive: $(TOOLS)/github.com/mgechev/revive $(GO_SOURCES) $(REVIVE_CONFIG)	## run revive linter
+.lint-revive: $(TOOLS)/github.com/mgechev/revive/revive $(GO_SOURCES) $(REVIVE_CONFIG)	## run revive linter
 	$< -config $(REVIVE_CONFIG) -formatter friendly -exclude ./vendor/... $(REVIVELINTER_EXCLUDES) ./...
 
 .lint-fix: $(GO_SOURCES) ## run fix

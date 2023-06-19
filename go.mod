@@ -1,14 +1,14 @@
 module github.com/remerge/go-server
 
-go 1.18
+go 1.20
 
 require (
-	github.com/rcrowley/go-metrics v0.0.0-20180503174638-e2704e165165
-	github.com/remerge/cue v0.0.0-20180404154012-5ce627d813ef
-	github.com/spf13/cobra v0.0.3
+	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
+	github.com/remerge/cue v0.0.0-20230118100141-67b45f1f06a5
+	github.com/spf13/cobra v1.7.0
 )
 
 require (
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/spf13/pflag v1.0.3 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
 )
