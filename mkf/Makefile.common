@@ -29,7 +29,6 @@ TOOLS ?= $(MKF_PREFIX)/.tools
 $(TOOLS)/%:
 	test -x "$@" || GOBIN=$(shell pwd)/$(dir $@) go install $*@latest
 
-
 # Code maintenance
 
 GENERATE_SOURCES ?=

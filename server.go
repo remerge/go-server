@@ -88,7 +88,10 @@ func NewServerWithTLS(port int, tlsPort int, key string, cert string) (server *S
 		return nil, err
 	}
 
-	server.TlsConfig = &tls.Config{Certificates: []tls.Certificate{pair}}
+	server.TlsConfig = &tls.Config{
+		Certificates: []tls.Certificate{pair},
+		MinVersion:   tls.VersionTLS12,
+	}
 	server.TlsPort = tlsPort
 
 	return server, nil
