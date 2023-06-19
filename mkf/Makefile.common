@@ -1,5 +1,4 @@
-# CircleCI checks out projects into ~/project, so use the repo name instead
-PROJECT ?= $(or $(CIRCLE_PROJECT_REPONAME), $(notdir $(patsubst %/,%,$(CURDIR))))
+PROJECT ?= $(notdir $(word 2,$(shell grep '^module ' < go.mod)))
 PACKAGE ?= github.com/remerge/$(PROJECT)
 
 MKF_PREFIX ?= mkf
@@ -45,16 +44,9 @@ GOFMT_SOURCES = $(filter-out $(GOFMT_EXCLUDES),$(GO_SOURCES))
 
 .fmt-gofmt: $(GOFMT_SOURCES)	## format go sources
 	gofmt -w -s -l $^
-	
+
 .fmt-goimports: $(TOOLS)/golang.org/x/tools/cmd/goimports $(GOFMT_SOURCES)	## group and correct imports
 	$< -w -l $(GOFMT_SOURCES)
-
-# if included update the makefile subtree to the latest version
-check-makefile-remote:
-	git remote | grep makefile || git remote add makefile https://github.com/remerge/go-makefile.git && git fetch -a -p makefile
-
-update-makefile: check-makefile-remote
-	git subtree pull --squash --prefix=$(MKF_PREFIX) makefile $(MKF_BRANCH)
 
 clean::
 	rm -rf $(TOOLS)
@@ -77,16 +69,16 @@ TEST_ARGS ?=
 test:: $(GO_SOURCES) go.mod	## regular tests
 	go test $(TEST_ARGS) -tags="$(TEST_TAGS)" -timeout=$(TEST_TIMEOUT) -run=$(TESTS) ./...
 
-race: $(GO_SOURCES) go.mod	## race tests
+race:: $(GO_SOURCES) go.mod	## race tests
 	CGO_ENABLED=1 go test  $(TEST_ARGS) -tags="$(TEST_TAGS)" -race -timeout=$(TEST_TIMEOUT) -run=$(TESTS) ./...
 
-bench: $(GO_SOURCES) go.mod	## benchmarks
+bench:: $(GO_SOURCES) go.mod	## benchmarks
 	go test  $(TEST_ARGS) -tags="$(TEST_TAGS)" -run=^$ -bench=$(TESTS) -benchmem -cpu 32 ./...
 
-test-nocache: $(GO_SOURCES) go.mod
+test-nocache:: $(GO_SOURCES) go.mod
 	go test  $(TEST_ARGS) -tags="$(TEST_TAGS)" -count=1 -timeout=$(TEST_TIMEOUT) -run=$(TESTS) ./...
 
-race-nocache: $(GO_SOURCES) go.mod
+race-nocache:: $(GO_SOURCES) go.mod
 	CGO_ENABLED=1 go test  $(TEST_ARGS) -tags="$(TEST_TAGS)" -race -count=1 -timeout=$(TEST_TIMEOUT) -run=$(TESTS) ./...
 
 escape: $(GO_SOURCES) go.mod ## builds with escape analysis active
@@ -106,10 +98,6 @@ watch: $(TOOLS)/github.com/cespare/reflex
 # Use "VET_FLAGS" to define vet linter flags.
 
 lint:: .lint-mod-tidy .lint-fmt .lint-goimports .lint-vet .lint-shadow .lint-revive .lint-fix ## run all linters
-
-lint-mkf: check-makefile-remote
-	@DIFF=`git diff --name-only --relative HEAD:$(MKF_PREFIX)/ makefile/$(MKF_BRANCH):./` && echo "$$DIFF" && test -z "$$DIFF"
-.PHONY: .lint-mkf
 
 .lint-fmt: $(GOFMT_SOURCES) ## compare gofmt and goimports output
 	@test -z "$(GOFMT_SOURCES)" || DIFF=`gofmt -s -d $(GOFMT_SOURCES)` && test -z "$$DIFF" || echo "$$DIFF" && test -z "$$DIFF"
@@ -133,14 +121,20 @@ REVIVE_CONFIG = $(or $(wildcard revive.toml),$(MKF_PREFIX)/revive.toml)
 	@DIFF=`go tool fix -diff $^` && test -z "$$DIFF" || echo "$$DIFF" && test -z "$$DIFF"
 
 .lint-mod-tidy:	## check go mod tidy is applied
+# clean up from the last run
 	rm -f /tmp/$(PROJECT).go.mod.tidy.bak /tmp/$(PROJECT).go.sum.tidy.bak /tmp/$(PROJECT).go.mod.tidy /tmp/$(PROJECT).go.sum.tidy
+# backup the current files
 	cp go.mod /tmp/$(PROJECT).go.mod.tidy.bak
 	cp go.sum /tmp/$(PROJECT).go.sum.tidy.bak
+# let go do its magic
 	go mod tidy
+# move cleaned files out of the way
 	mv go.mod /tmp/$(PROJECT).go.mod.tidy
 	mv go.sum /tmp/$(PROJECT).go.sum.tidy
+# get original files back
 	mv /tmp/$(PROJECT).go.mod.tidy.bak go.mod
 	mv /tmp/$(PROJECT).go.sum.tidy.bak go.sum
+# compare cleaned and original files
 	diff go.mod /tmp/$(PROJECT).go.mod.tidy
 .NOTPARALLEL: .lint-mod-tidy
 .PHONY: .lint-mod-tidy

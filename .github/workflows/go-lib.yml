@@ -1,3 +1,4 @@
+---
 name: Go App
 on:
   pull_request:
@@ -9,6 +10,6 @@ on:
 
 jobs:
   go-checks:
-    with:
-      goprivate: ''
     uses: remerge/workflows/.github/workflows/go-checks.yml@main
+    with:
+      goprivate: ""

@@ -1,0 +1,18 @@
+---
+# Changes here will be overwritten by Copier
+_commit: v1.15.3
+_src_path: gh:remerge/template
+deploy_branch: production
+is_library: true
+is_service: false
+project_description: Remerge-style foundation of server
+project_id: go-server
+project_license: private
+project_name: go-server
+project_owner: core
+project_type: default
+use_ansible: false
+use_docker: false
+use_golang: true
+use_python: false
+use_terraform: false

@@ -30,8 +30,8 @@ func testStop(t *testing.T) {
 	handler := &testHandler{&val}
 	s.Handler = handler
 
-	dials := make(chan bool)
-	go makeRequests(t, dials)
+	dials, done := make(chan struct{}), make(chan struct{})
+	go makeRequests(t, dials, done)
 
 	err = s.Run()
 	if err != nil {
@@ -45,16 +45,25 @@ func testStop(t *testing.T) {
 	// removed after it will trigger a segfault in Handle()
 	s.Stop()
 	handler.resource = nil
+
+	// Since this function is called within a loop, the spawned `makeRequests` goroutine
+	// could continue to work (until the inner loops ends). Since each goroutine allocates
+	// new N file descriptors while the previous one are not deallocated yet, this leads to
+	// an overall test timeout (the underlying `net` waits for the descriptors available).
+	// To avoid this, we want to ensure that all `makeRequests` are called in sequence;
+	// this also makes sense when the test is run under the race checker, when multiple
+	// execution flows are triggered at time.
+	<-done
 }
 
-func makeRequests(t *testing.T, dials chan<- bool) {
+func makeRequests(t *testing.T, dials chan<- struct{}, done chan<- struct{}) {
 	for i := 0; i < 100; i++ {
 		c, err := net.Dial("tcp", fmt.Sprint("localhost:", testPort))
 		if err != nil {
 			break
 		}
 		select {
-		case dials <- true:
+		case dials <- struct{}{}:
 		default:
 		}
 		err = c.Close()
@@ -62,6 +71,7 @@ func makeRequests(t *testing.T, dials chan<- bool) {
 			t.Error(err)
 		}
 	}
+	done <- struct{}{}
 }
 
 type testHandler struct {

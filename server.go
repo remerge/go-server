@@ -1,4 +1,4 @@
-// Package server go-server common package
+// Package server provides a foundation for creating remerge-style servers
 package server
 
 import (
