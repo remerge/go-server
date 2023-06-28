@@ -1,0 +1,33 @@
+---
+name: go-handle-dependency-update
+
+on:
+  repository_dispatch:
+    types: [possible-dependency-update]
+
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  deployments: read
+  issues: read
+  discussions: read
+  packages: read
+  pages: read
+  pull-requests: read
+  repository-projects: read
+  security-events: read
+  statuses: read
+
+jobs:
+  handle_possible_dependency_update_event:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: remerge/check-possible-dependency-update@main
+        with:
+          repo_path: ${{ github.event.client_payload.repo_path }}
+          repo_name: ${{ github.event.client_payload.repo_name }}
+          assign_to: ${{ github.event.client_payload.assign_to }}
+          ssh_key: ${{ secrets.DEPLOY_USER_SSH_KEY }}
+          app_id: ${{ secrets.DEPUPDATER_APP_ID }}
+          app_key: ${{ secrets.DEPUPDATER_APP_KEY }}

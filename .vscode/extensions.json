@@ -10,6 +10,7 @@
     "esbenp.prettier-vscode",
     "github.vscode-github-actions",
     "GitHub.vscode-pull-request-github",
+    "jasonnutter.vscode-codeowners",
     "mkhl.direnv",
     "mkhl.shfmt",
     "ms-azuretools.vscode-docker",
