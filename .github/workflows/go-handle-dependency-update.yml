@@ -31,3 +31,8 @@ jobs:
           ssh_key: ${{ secrets.DEPLOY_USER_SSH_KEY }}
           app_id: ${{ secrets.DEPUPDATER_APP_ID }}
           app_key: ${{ secrets.DEPUPDATER_APP_KEY }}
+          gpg_private_key: ${{ secrets.DEPUPDATER_GPG_PRIVATE_KEY }}
+          gpg_passphrase: ${{ secrets.DEPUPDATER_GPG_PASSPHRASE }}
+          commiter_name: "Dependency Updater"
+          commiter_email: "it-owners+depupdater@remerge.io"
+          go_private: "github.com/remerge"
