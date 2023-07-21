@@ -3,6 +3,8 @@ quiet: true
 compact: false
 
 skip-check:
+  # https://github.com/bridgecrewio/checkov/issues/5286
+  - CKV_TF_1
   # do not enforce Customer Supplied Encryption Keys (CSEK)
   - CKV_GCP_37
   - CKV_GCP_38
