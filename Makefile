@@ -1,6 +1,25 @@
+PROJECT_ID := go-server
+PROJECT_NAME := Go Server Framework
+PROJECT_REPO := github.com/remerge/$(PROJECT_ID)
+
+# Provide local development fallbacks if there are no CI variables
+DEV_WHOAMI := $(shell whoami)
+DEV_COMMIT := dev.$(DEV_WHOAMI).$(shell git rev-parse --short HEAD)
+
+# Set CI variables from GitHub Actions workflow run
+CI_COMMIT ?= $(or $(GITHUB_SHA), $(DEV_COMMIT))
+CI_REPO ?= $(or $(GITHUB_REPOSITORY), $(PROJECT_REPO))
+CI_NUM ?= $(or $(GITHUB_RUN_ID), $(DEV_WHOAMI))
+
+# Base URL of our Google Cloud Artifact Registry for Docker images being
+# deployed as Nomad service jobs by GitHub Actions workflows or local divert
+SERVICES_ARTIFACT_REGISTRY := europe-west4-docker.pkg.dev/artifact-registry-ff9b/services/
+
+# Use bash instead of sh as the shell to run commands
 # https://www.gnu.org/software/make/manual/html_node/Choosing-the-Shell.html
 SHELL = bash
 
+# Show auto-generated help text when invoking make without a target
 # https://www.gnu.org/software/make/manual/html_node/Special-Variables.html
 .DEFAULT_GOAL := help
 
@@ -54,11 +73,11 @@ endif
 
 .PHONY: copier-copy
 copier-copy: ## copy template without merging updates
-	copier$(if $(FORCE), -f,)$(if $(REF), -r $(REF),) -w copy gh:remerge/template .
+	copier recopy$(if $(FORCE), -f,)$(if $(REF), -r $(REF),)
 
 .PHONY: copier-update
 copier-update: ## update project from copier template
-	copier$(if $(FORCE), -f,)$(if $(REF), -r $(REF),) -w update
+	copier update$(if $(FORCE), -f,)$(if $(REF), -r $(REF),)
 update:: copier-update
 
 ## pre-commit

@@ -29,24 +29,25 @@ repos:
       - id: fix-byte-order-marker
       - id: forbid-submodules
       - id: trailing-whitespace
+        exclude: "^.gitignore$"
 
   # https://github.com/pre-commit/mirrors-prettier/tags
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v2.7.1"
+    rev: "v3.0.0"
     hooks:
       - id: prettier
         exclude: "^project/"
 
   # https://github.com/igorshubovych/markdownlint-cli/tags
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: "v0.34.0"
+    rev: "v0.35.0"
     hooks:
       - id: markdownlint-fix
         name: markdownlint
 
   # https://github.com/adrienverge/yamllint/tags
   - repo: https://github.com/adrienverge/yamllint
-    rev: "v1.31.0"
+    rev: "v1.32.0"
     hooks:
       - id: yamllint
         entry: yamllint --strict
@@ -66,14 +67,14 @@ repos:
 
   # https://github.com/rhysd/actionlint/tags
   - repo: https://github.com/rhysd/actionlint
-    rev: "v1.6.24"
+    rev: "v1.6.25"
     hooks:
       - id: actionlint-docker
         name: actionlint
 
   # https://github.com/bridgecrewio/checkov/tags
   - repo: https://github.com/bridgecrewio/checkov
-    rev: "2.3.251"
+    rev: "2.3.340"
     hooks:
       - id: checkov
         name: checkov
