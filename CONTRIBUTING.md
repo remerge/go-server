@@ -37,6 +37,10 @@ brew install --cask docker
 brew install pre-commit pipx direnv copier
 ```
 
+Once `pre-commit` hook is activated (`make pre-commit-install`),
+set of formatting and linting routines is run automatically on each commit.
+The step could be avoided by providing `--no-verify` flag for `git commit`.
+
 ## Go Makefile Targets
 
 ### Building binaries
@@ -122,9 +126,18 @@ make watch T=NameOfTestWithoutTestPrefix
 This target lints the source code using various tools: `go fmt`, `goimports`,
 the modules consistency check, `go check`, `go vet` and `revive`.
 
+If any of these 3rd-party checkers hasn't been downloaded, they will be
+automatically fetched and employed. `go.mk` file contains constants that specify
+the particular version of each checker to retrieve (see `*_LINTER_VERSION*`).
+
+Usage of the latest version of a checker could be indicated by setting
+the corresponding constant in `go.mk` to `latest`.
+
 ```shell
 make lint
 ```
+
+⚠️ This target is run automatically as part of `pre-commit` hook on each commit.
 
 > The target will not change sources.
 

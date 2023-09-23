@@ -1,6 +1,6 @@
 ---
 # Changes here will be overwritten by Copier
-_commit: v2.0.1
+_commit: v2.1.2
 _src_path: gh:remerge/template
 is_golang_library: true
 project_id: go-server
@@ -8,6 +8,7 @@ project_license: private
 project_name: Go Server Framework
 project_owner: core
 project_type: default
+run_workflows_for_all_branches: false
 use_ansible: false
 use_golang: true
 use_nomad: false

@@ -1,3 +1,31 @@
+SHADOW_LINTER := golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow
+SHADOW_LINTER_VERSION := v0.13.0
+
+GOIMPORTS_LINTER_VERSION := v0.13.0
+GOIMPORTS_LINTER := golang.org/x/tools/cmd/goimports
+
+REVIVE_LINTER_VERSION := v1.3.3
+REVIVE_LINTER := github.com/mgechev/revive
+
+
+.PHONY: go-update
+go-update:: ## update Go modules
+	go get -u -x
+	go mod tidy
+update:: go-update
+
+.PHONY: go-build
+go-build: ## build a Go binary matching the local architecture
+go-build: .build/$(.BIN_LOCAL)
+build:: go-build
+
+.PHONY: go-clean
+go-clean: ## remove local Go artifacts
+	rm -rf $(TOOLS)
+	rm -fv .build/$(.BIN_LOCAL)
+clean:: go-clean
+
+
 # all go sources in build tree excluding vendor
 GO_SOURCES = $(shell find . -type f \( -iname '*.go' \) -not \( -path "./vendor/*" -path ".*" \))
 
@@ -20,9 +48,18 @@ export GOPRIVATE ?= github.com/remerge/*
 #
 
 TOOLS ?= .tools
+GOTOOL_VERSION_TO_INSTALL ?= latest
 $(TOOLS)/%:
-	test -x "$@" || GOBIN=$(shell pwd)/$(dir $@) go install $*@latest
+	test -x "$@" || GOBIN=$(shell pwd)/$(dir $@) go install $*@$(GOTOOL_VERSION_TO_INSTALL)
 
+$(SHADOW_LINTER):
+	make $(TOOLS)/$@ GOTOOL_VERSION_TO_INSTALL=$(SHADOW_LINTER_VERSION)
+
+$(REVIVE_LINTER):
+	make $(TOOLS)/$@ GOTOOL_VERSION_TO_INSTALL=$(REVIVE_LINTER_VERSION)
+
+$(GOIMPORTS_LINTER):
+	make $(TOOLS)/$@ GOTOOL_VERSION_TO_INSTALL=$(GOIMPORTS_LINTER_VERSION)
 
 # Code maintenance
 
@@ -40,11 +77,8 @@ GOFMT_SOURCES = $(filter-out $(GOFMT_EXCLUDES),$(GO_SOURCES))
 .fmt-gofmt: $(GOFMT_SOURCES)	## format go sources
 	gofmt -w -s -l $^
 
-.fmt-goimports: $(TOOLS)/golang.org/x/tools/cmd/goimports $(GOFMT_SOURCES)	## group and correct imports
-	$< -w -l $(GOFMT_SOURCES)
-
-clean::
-	rm -rf $(TOOLS)
+.fmt-goimports: $(GOIMPORTS_LINTER) $(GOFMT_SOURCES)	## group and correct imports
+	$(TOOLS)/$< -w -l $(GOFMT_SOURCES)
 
 # Dependencies cleanup
 
@@ -96,20 +130,20 @@ lint:: .lint-mod-tidy .lint-fmt .lint-goimports .lint-vet .lint-shadow .lint-rev
 .lint-fmt: $(GOFMT_SOURCES) ## compare gofmt and goimports output
 	@test -z "$(GOFMT_SOURCES)" || DIFF=`gofmt -s -d $(GOFMT_SOURCES)` && test -z "$$DIFF" || echo "$$DIFF" && test -z "$$DIFF"
 
-.lint-goimports: $(TOOLS)/golang.org/x/tools/cmd/goimports $(GOFMT_SOURCES)
-	@test -z "$(GOFMT_SOURCES)" || DIFF=`$< -d $(GOFMT_SOURCES)` && test -z "$$DIFF" || echo "$$DIFF" && test -z "$$DIFF"
+.lint-goimports: $(GOIMPORTS_LINTER) $(GOFMT_SOURCES)
+	@test -z "$(GOFMT_SOURCES)" || DIFF=`$(TOOLS)/$< -d $(GOFMT_SOURCES)` && test -z "$$DIFF" || echo "$$DIFF" && test -z "$$DIFF"
 
 .lint-vet: $(GO_SOURCES) go.mod ## run vet
 	go vet $(VET_FLAGS) ./...
 .NOTPARALLEL: .lint-vet
 
-.lint-shadow: $(TOOLS)/golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow $(GO_SOURCES) ## run shadow linter
-	go vet -vettool=$< ./...
+.lint-shadow: $(SHADOW_LINTER) $(GO_SOURCES) ## run shadow linter
+	go vet -vettool=$(TOOLS)/$< ./...
 .NOTPARALLEL: .lint-shadow
 
 REVIVE_CONFIG = $(wildcard revive.toml)
-.lint-revive: $(TOOLS)/github.com/mgechev/revive $(GO_SOURCES) $(REVIVE_CONFIG)	## run revive linter
-	$< -config $(REVIVE_CONFIG) -formatter friendly -exclude ./vendor/... $(REVIVELINTER_EXCLUDES) ./...
+.lint-revive: $(REVIVE_LINTER) $(GO_SOURCES) $(REVIVE_CONFIG)	## run revive linter
+	$(TOOLS)/$< -config $(REVIVE_CONFIG) -formatter friendly -exclude ./vendor/... $(REVIVELINTER_EXCLUDES) ./...
 
 .lint-fix: $(GO_SOURCES) ## run fix
 	@DIFF=`go tool fix -diff $^` && test -z "$$DIFF" || echo "$$DIFF" && test -z "$$DIFF"
@@ -132,10 +166,6 @@ REVIVE_CONFIG = $(wildcard revive.toml)
 	diff go.mod /tmp/$(PROJECT_ID).go.mod.tidy
 .NOTPARALLEL: .lint-mod-tidy
 .PHONY: .lint-mod-tidy
-
-clean::
-	-rm -rf .build/*
-
 
 # Building binaries
 
