@@ -10,7 +10,7 @@ default_install_hook_types:
 repos:
   # https://github.com/pre-commit/pre-commit-hooks/tags
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: "v4.4.0"
+    rev: "v4.5.0"
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -74,7 +74,7 @@ repos:
 
   # https://github.com/bridgecrewio/checkov/tags
   - repo: https://github.com/bridgecrewio/checkov
-    rev: "2.4.48"
+    rev: "3.0.21"
     hooks:
       - id: checkov
         name: checkov
