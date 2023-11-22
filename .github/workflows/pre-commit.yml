@@ -13,7 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - uses: webfactory/ssh-agent@v0.6.0
+        with:
+          ssh-private-key: "${{ secrets.DEPLOY_USER_SSH_KEY }}"
+      - run: 'git config --global url."git@github.com:".insteadOf "https://github.com/"'
 
       - name: Load envrc
         uses: HatsuneMiku3939/direnv-action@v1
