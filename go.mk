@@ -75,10 +75,10 @@ GOFMT_EXCLUDES ?= %.pb.go %_gen.go %_easyjson.go
 GOFMT_SOURCES = $(filter-out $(GOFMT_EXCLUDES),$(GO_SOURCES))
 
 .fmt-gofmt: $(GOFMT_SOURCES)	## format go sources
-	gofmt -w -s -l $^
+	if [[ "$(GOFMT_SOURCES)" != "" ]]; then gofmt -w -s -l $(GOFMT_SOURCES); fi
 
 .fmt-goimports: $(GOIMPORTS_LINTER) $(GOFMT_SOURCES)	## group and correct imports
-	$(TOOLS)/$< -w -l $(GOFMT_SOURCES)
+	if [[ "$(GOFMT_SOURCES)" != "" ]]; then $(TOOLS)/$< -w -l $(GOFMT_SOURCES); fi
 
 # Dependencies cleanup
 

@@ -1,12 +1,6 @@
-# go-server
+# Go Server Framework
 
-Package `server` provides a
-
-## Install
-
-```bash
-go get github.com/remerge/go-server
-```
+Package `server` provides an opinionated server framework in Go.
 
 ## Usage
 
