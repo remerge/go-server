@@ -14,7 +14,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - run: echo "GO_VERSION=$(grep '^go ' < go.mod | awk '{print $2}')" >> "$GITHUB_ENV"
 
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
       - uses: webfactory/ssh-agent@v0.6.0
         with:
           ssh-private-key: "${{ secrets.DEPLOY_USER_SSH_KEY }}"
