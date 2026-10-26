@@ -2,6 +2,8 @@ module github.com/remerge/go-server
 
 go 1.21
 
+toolchain go1.26.10
+
 require (
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
 	github.com/remerge/cue v0.0.0-20230118100141-67b45f1f06a5
