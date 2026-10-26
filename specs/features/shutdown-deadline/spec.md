@@ -1,6 +1,7 @@
 # Shutdown Deadline
 
-After listener shutdown and socket closure, Stop waits for handlers until they finish or StopDeadline expires.
-Deadline expiry logs the existing warning and returns instead of continuing to wait indefinitely.
-It does not cancel handlers, change timeout values, or bound earlier listener/socket teardown.
-Real TCP tests cover ordinary completion, an idle connection, and a handler held past the deadline.
+Stop closes listeners and sockets, then waits for handlers.
+The wait ends when handlers finish or StopDeadline expires.
+Expiry logs the existing warning and returns without cancelling handlers.
+Timeout values and earlier listener/socket teardown are unchanged.
+Real TCP tests cover completion, idle connections and stuck handlers.

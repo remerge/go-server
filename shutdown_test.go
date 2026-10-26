@@ -43,8 +43,8 @@ func TestStopWaitsForHandlerOrDeadline(t *testing.T) {
 				}
 				<-release
 			})
-			if err := s.Run(); err != nil {
-				t.Fatal(err)
+			if runErr := s.Run(); runErr != nil {
+				t.Fatal(runErr)
 			}
 			defer func() {
 				finish()
@@ -71,6 +71,10 @@ func TestStopWaitsForHandlerOrDeadline(t *testing.T) {
 			stopped := make(chan struct{})
 			start := time.Now()
 			go func() { s.Stop(); close(stopped) }()
+			defer func() {
+				finish()
+				<-stopped
+			}()
 			// Socket closure proves Stop reached connection teardown while the handler is blocked.
 			if err := conn.SetReadDeadline(time.Now().Add(time.Second)); err != nil {
 				t.Fatal(err)
@@ -85,7 +89,7 @@ func TestStopWaitsForHandlerOrDeadline(t *testing.T) {
 				select {
 				case <-stopped:
 					t.Error("Stop returned before the handler completed")
-				default:
+				case <-time.After(50 * time.Millisecond):
 				}
 				finish()
 			}

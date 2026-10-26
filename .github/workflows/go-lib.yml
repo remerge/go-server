@@ -23,6 +23,13 @@ permissions:
 
 jobs:
   go-checks:
-    uses: remerge/workflows/.github/workflows/go-checks.yml@main
-    secrets:
-      ssh_key: ${{ secrets.DEPLOY_USER_SSH_KEY }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Check generated files and formatting
+        run: make gen && git diff --exit-code
+      - name: Run race tests
+        run: make race-nocache

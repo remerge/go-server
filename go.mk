@@ -1,9 +1,9 @@
 GO_VERSION := 1.21
 
 SHADOW_LINTER := golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow
-SHADOW_LINTER_VERSION := v0.13.0
+SHADOW_LINTER_VERSION := v0.38.0
 
-GOIMPORTS_LINTER_VERSION := v0.13.0
+GOIMPORTS_LINTER_VERSION := v0.38.0
 GOIMPORTS_LINTER := golang.org/x/tools/cmd/goimports
 
 REVIVE_LINTER_VERSION := v1.3.3
@@ -148,7 +148,8 @@ REVIVE_CONFIG = $(wildcard revive.toml)
 	$(TOOLS)/$< -config $(REVIVE_CONFIG) -formatter friendly -exclude ./vendor/... $(REVIVELINTER_EXCLUDES) ./...
 
 .lint-fix: $(GO_SOURCES) ## run fix
-	@DIFF=`go tool fix -diff $^` && test -z "$$DIFF" || echo "$$DIFF" && test -z "$$DIFF"
+	@DIFF=`go tool fix -go=go$(GO_VERSION) -diff $^` || exit $$?; \
+		test -z "$$DIFF" || { echo "$$DIFF"; exit 1; }
 
 .lint-mod-tidy:	## check go mod tidy is applied
 # clean up from the last run
