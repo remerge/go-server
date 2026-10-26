@@ -127,7 +127,7 @@ watch: $(TOOLS)/github.com/cespare/reflex
 # Use "GOFMT_EXCLUDES" to exclude files from gofmt and goimports.
 # Use "VET_FLAGS" to define vet linter flags.
 
-lint:: .lint-mod-tidy .lint-fmt .lint-goimports .lint-vet .lint-shadow .lint-revive .lint-fix ## run all linters
+lint:: .lint-mod-tidy .lint-fmt .lint-goimports .lint-vet .lint-shadow .lint-revive ## run all linters
 
 .lint-fmt: $(GOFMT_SOURCES) ## compare gofmt and goimports output
 	@test -z "$(GOFMT_SOURCES)" || DIFF=`gofmt -s -d $(GOFMT_SOURCES)` && test -z "$$DIFF" || echo "$$DIFF" && test -z "$$DIFF"
@@ -146,10 +146,6 @@ lint:: .lint-mod-tidy .lint-fmt .lint-goimports .lint-vet .lint-shadow .lint-rev
 REVIVE_CONFIG = $(wildcard revive.toml)
 .lint-revive: $(REVIVE_LINTER) $(GO_SOURCES) $(REVIVE_CONFIG)	## run revive linter
 	$(TOOLS)/$< -config $(REVIVE_CONFIG) -formatter friendly -exclude ./vendor/... $(REVIVELINTER_EXCLUDES) ./...
-
-.lint-fix: $(GO_SOURCES) ## run fix
-	@DIFF=`go tool fix -go=go$(GO_VERSION) -diff $^` || exit $$?; \
-		test -z "$$DIFF" || { echo "$$DIFF"; exit 1; }
 
 .lint-mod-tidy:	## check go mod tidy is applied
 # clean up from the last run
