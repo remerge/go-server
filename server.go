@@ -168,6 +168,7 @@ var StopDeadline = time.Minute
 // tlsListener are done and closed their connections.
 func (server *Server) waitForConnectionsToClose() {
 	deadline := time.NewTimer(StopDeadline)
+	defer deadline.Stop()
 	for {
 		if server.numConns.Count() == 0 {
 			server.Log.Infof("all requests finished")
@@ -177,7 +178,7 @@ func (server *Server) waitForConnectionsToClose() {
 		select {
 		case <-deadline.C:
 			server.Log.Warnf("not all requests finished after %v", StopDeadline)
-			break
+			return
 		case <-time.After(time.Millisecond):
 		}
 	}
