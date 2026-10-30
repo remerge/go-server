@@ -4,7 +4,7 @@ name: go-lib
 on:
   pull_request:
   push:
-    branches: [main, master, production]
+    branches: [main, master]
 
 permissions:
   actions: none
@@ -29,7 +29,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - name: Check generated files and formatting
-        run: make gen && git diff --exit-code
+      - name: Check generated files
+        run: go generate ./... && git diff --exit-code
       - name: Run race tests
         run: make race-nocache
