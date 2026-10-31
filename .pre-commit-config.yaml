@@ -9,6 +9,10 @@ default_install_hook_types:
 
 default_language_version:
   python: python3.14
+  # Go that builds the Go-based hooks (golangci-lint). It must be at least the
+  # go directive in go.mod, or golangci-lint refuses to load the module, and a
+  # change here also invalidates CI's cached hook environments.
+  golang: "1.27.3"
 
 # the hooks that rewrite files carry `alias: format'; everything else is a check.
 # `make format' runs the aliased set only, `make check' still runs everything.
@@ -99,7 +103,7 @@ repos:
 
   # https://github.com/golangci/golangci-lint/tags
   - repo: https://github.com/golangci/golangci-lint
-    rev: "v2.14.0"
+    rev: "v2.15.0"
     hooks:
       - id: golangci-lint
         args: [--config=.golangci.yml]
@@ -118,3 +122,9 @@ repos:
         always_run: true
         verbose: true
         pass_filenames: false
+
+  # Repository hooks: add this repository's own hooks below this comment.
+  # The template only ever adds or changes hooks above it, so copier update
+  # carries everything below it over without conflicts. Paths that no hook
+  # should touch (vendored or generated files) go into a top-level
+  # `exclude:` regex at the very end of the file, after these hooks.
