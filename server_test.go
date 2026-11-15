@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net"
+	"sync"
 	"testing"
 )
 
@@ -56,21 +57,27 @@ func testStop(t *testing.T) {
 	<-done
 }
 
+// makeRequests closes dials after the first connection, so testStop never
+// misses it, and closes it anyway if no dial succeeded, so testStop never
+// waits forever.
 func makeRequests(t *testing.T, dials chan<- struct{}, done chan<- struct{}) {
+	var once sync.Once
+	signal := func() { once.Do(func() { close(dials) }) }
 	for i := 0; i < 100; i++ {
 		c, err := net.Dial("tcp", fmt.Sprint("localhost:", testPort))
 		if err != nil {
+			if i == 0 {
+				t.Error(err)
+			}
 			break
 		}
-		select {
-		case dials <- struct{}{}:
-		default:
-		}
+		signal()
 		err = c.Close()
 		if err != nil {
 			t.Error(err)
 		}
 	}
+	signal()
 	done <- struct{}{}
 }
 
