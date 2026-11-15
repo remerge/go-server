@@ -31,13 +31,14 @@ func testStop(t *testing.T) {
 	handler := &testHandler{&val}
 	s.Handler = handler
 
-	dials, done := make(chan struct{}), make(chan struct{})
-	go makeRequests(t, dials, done)
-
 	err = s.Run()
 	if err != nil {
 		t.Error(err)
 	}
+
+	// Run creates the listener, so start dialing only once it has returned.
+	dials, done := make(chan struct{}), make(chan struct{})
+	go makeRequests(t, dials, done)
 
 	// wait until the first request was started
 	<-dials
